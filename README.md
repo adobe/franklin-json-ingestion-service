@@ -2,6 +2,11 @@
 
 > An example library to be used in and with Project Franklin
 
+See also:
+
+- https://github.com/adobe/franklin-fragment-ingestor
+- https://github.com/adobe/franklin-query-service
+
 ## Status
 [![codecov](https://img.shields.io/codecov/c/github/adobe/franklin-json-ingestion-service.svg)](https://codecov.io/gh/adobe/franklin-json-ingestion-service)
 [![CircleCI](https://img.shields.io/circleci/project/github/adobe/franklin-json-ingestion-service.svg)](https://circleci.com/gh/adobe/franklin-json-ingestion-service)
