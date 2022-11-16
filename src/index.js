@@ -28,5 +28,4 @@ function run(request, context) {
 
 export const main = wrap(run)
   .with(status)
-  .with(logger.trace)
   .with(logger);

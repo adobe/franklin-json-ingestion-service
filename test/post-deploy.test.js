@@ -43,7 +43,6 @@ createTargets().forEach((target) => {
     it('invokes the function', async () => {
       const res = await fetch(`${target.host()}${target.urlPath()}`);
       assert.strictEqual(res.status, 200);
-      assert.fail('not ready yet');
     }).timeout(50000);
   });
 });

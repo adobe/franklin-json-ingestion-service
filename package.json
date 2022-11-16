@@ -1,16 +1,15 @@
 {
   "name": "@adobe/franklin-json-ingestion-service",
-  "version": "1.4.9",
+  "version": "0.0.1",
   "private": true,
   "description": "Franklin JSON Ingestion Service",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": " c8 mocha  -i -g 'Post-Deploy'",
+    "test": "c8 mocha  -i -g 'Post-Deploy'",
     "test-postdeploy": "mocha -g 'Post-Deploy'",
     "lint": "eslint .",
     "semantic-release": "semantic-release",
-    "commit": "git-cz",
     "build": "hedy -v",
     "deploy": "hedy -v --deploy --test",
     "deploy-routes": "hedy --no-build --no-hints -l major",
@@ -23,6 +22,7 @@
     "name": "helix-services/json-ingestion-service@${version}",
     "testUrl": "/_status_check/healthcheck.json",
     "memory": 256,
+    "awsRole!important": "arn:aws:iam::282898975672:role/franklin-role-lambda-headless",
     "fastlyServiceId!important": ""
   },
   "mocha": {
