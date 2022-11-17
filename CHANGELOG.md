@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.0.0...v1.1.0) (2022-11-17)
+
+
+### Features
+
+* change welcome message. ([3a0f59b](https://github.com/adobe/franklin-json-ingestion-service/commit/3a0f59b3a0a96478343fb72841c341335cbb353d))
+
 # 1.0.0 (2022-11-16)
 
 
