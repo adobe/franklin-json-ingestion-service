@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.1.0...v1.2.0) (2022-11-17)
+
+
+### Features
+
+* add read json example ([bcd8b80](https://github.com/adobe/franklin-json-ingestion-service/commit/bcd8b80f52a34cb064a3c9762abf1a0ac6b5ab57))
+
 # [1.1.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.0.0...v1.1.0) (2022-11-17)
 
 
