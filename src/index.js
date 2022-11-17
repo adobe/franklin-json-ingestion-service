@@ -44,7 +44,7 @@ const deleteItemAction = (s3, key, deletedKeys) => new Promise((resolve, reject)
  */
 async function run(request, context) {
   if (request.method !== 'POST') {
-    return new Response('Currently only POST is implemented', { status: 400 });
+    return new Response('Currently only POST is implemented', { status: 405 });
   } else if (request.headers.get('Content-Type') !== 'application/json') {
     return new Response('Invalid request content type please check the API for details', { status: 400 });
   } else {

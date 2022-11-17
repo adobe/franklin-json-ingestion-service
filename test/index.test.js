@@ -19,6 +19,6 @@ describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await main(new Request('https://localhost/'), {});
     assert.strictEqual(await result.text(), 'Currently only POST is implemented');
-    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.status, 405);
   });
 });
