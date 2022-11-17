@@ -13,6 +13,7 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 /**
  * This is the main function
@@ -20,9 +21,19 @@ import { Response } from '@adobe/fetch';
  * @param {UniversalContext} context the context of the universal serverless function
  * @returns {Response} a response
  */
-function run(request, context) {
+async function run(request, context) {
   const name = new URL(request.url).searchParams.get('name') || 'world';
   context.log.info(`Saying hello to: ${name}.`);
+  if (name === 's3') {
+    const s3 = new S3Client();
+    const response = await s3.send(new GetObjectCommand({
+      Bucket: 'franklin-content-bus-headless',
+      Key: 'test.json',
+    }));
+    const ret = new Response(response.Body);
+    const json = await ret.buffer();
+    return new Response(`Hello. The json is: ${json}`);
+  }
   return new Response(`Hello, ${name}. Have a nice day.`);
 }
 
