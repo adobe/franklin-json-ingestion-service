@@ -6,6 +6,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
+    "dev": "node test/dev/server.js",
     "test": "c8 mocha  -i -g 'Post-Deploy'",
     "test-postdeploy": "mocha -g 'Post-Deploy'",
     "lint": "eslint .",

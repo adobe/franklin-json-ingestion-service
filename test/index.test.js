@@ -18,6 +18,7 @@ import { main } from '../src/index.js';
 describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await main(new Request('https://localhost/'), {});
-    assert.strictEqual(await result.text(), 'Hello, world. Have a nice day.');
+    assert.strictEqual(await result.text(), 'Currently only POST is implemented');
+    assert.strictEqual(await result.status, 400);
   });
 });
