@@ -9,7 +9,7 @@
     "dev": "node test/dev/server.js",
     "test": "c8 mocha  -i -g 'Post-Deploy'",
     "test-postdeploy": "mocha -g 'Post-Deploy'",
-    "lint": "eslint .",
+    "lint": "eslint --fix .",
     "semantic-release": "semantic-release",
     "build": "hedy -v",
     "deploy": "hedy -v --deploy --test",
