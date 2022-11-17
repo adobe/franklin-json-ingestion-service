@@ -23,7 +23,7 @@ import { Response } from '@adobe/fetch';
 function run(request, context) {
   const name = new URL(request.url).searchParams.get('name') || 'world';
   context.log.info(`Saying hello to: ${name}.`);
-  return new Response(`Hello, ${name}.`);
+  return new Response(`Hello, ${name}. Have a nice day.`);
 }
 
 export const main = wrap(run)
