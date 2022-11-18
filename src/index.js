@@ -14,7 +14,7 @@ import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import {
-  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, PutObjectTaggingCommand, S3Client,
+  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, S3Client,
 } from '@aws-sdk/client-s3';
 
 const VALID_MODES = ['preview', 'live'];
@@ -51,11 +51,11 @@ async function run(request, context) {
     try {
       const json = await request.json();
       context.log.info(`body: ${JSON.stringify(json)}`);
-      const tenantId = json.tenandId;
-      if (!tenantId || !tenandId.match(/[a-zA-Z0-9]*/g)) {
+      const { tenant } = json;
+      if (!tenant || !tenant.match(/[a-zA-Z0-9]*/g)) {
         return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9]', { status: 400 });
       }
-      const relPath = json.relPath;
+      const { relPath } = json;
       if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
         return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
       }
@@ -70,7 +70,7 @@ async function run(request, context) {
       const variation = json.variation || 'master';
       const suffix = variation !== 'master' ? `.${variation}` : '';
       const s3 = new S3Client();
-      const s3ObjectPath = `${tenantId}/${mode}/${relPath}`;
+      const s3ObjectPath = `${tenant}/${mode}/${relPath}`;
       if (action === 'store') {
         const { payload } = json;
         if (!payload || typeof payload !== 'object') {
@@ -81,7 +81,7 @@ async function run(request, context) {
         params.Body = JSON.stringify(payload);
         params.Key = `${s3ObjectPath}${suffix}.json`;
         params.Metadata = {
-          variation
+          variation,
         };
         try {
           await s3.send(new PutObjectCommand(params));
