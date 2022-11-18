@@ -80,8 +80,9 @@ async function run(request, context) {
         const params = buildDefaultParams();
         params.Body = JSON.stringify(payload);
         params.Key = `${s3ObjectPath}${suffix}.json`;
+        params.ContentType = "application/json";
         params.Metadata = {
-          variation,
+          "variation": variation
         };
         try {
           await s3.send(new PutObjectCommand(params));
