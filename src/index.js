@@ -14,7 +14,7 @@ import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import {
-  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, S3Client,
+  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, PutObjectTaggingCommand, S3Client,
 } from '@aws-sdk/client-s3';
 
 const VALID_MODES = ['preview', 'live'];
@@ -51,7 +51,11 @@ async function run(request, context) {
     try {
       const json = await request.json();
       context.log.info(`body: ${JSON.stringify(json)}`);
-      const { relPath } = json;
+      const tenantId = json.tenandId;
+      if (!tenantId || !tenandId.match(/[a-zA-Z0-9]*/g)) {
+        return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9]', { status: 400 });
+      }
+      const relPath = json.relPath;
       if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
         return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
       }
@@ -66,14 +70,19 @@ async function run(request, context) {
       const variation = json.variation || 'master';
       const suffix = variation !== 'master' ? `.${variation}` : '';
       const s3 = new S3Client();
+      const s3ObjectPath = `${tenantId}/${mode}/${relPath}`;
       if (action === 'store') {
         const { payload } = json;
         if (!payload || typeof payload !== 'object') {
           return new Response('Invalid parameters payload value, accept:{...} object', { status: 400 });
         }
+
         const params = buildDefaultParams();
         params.Body = JSON.stringify(payload);
-        params.Key = `${mode}/${relPath}${suffix}.json`;
+        params.Key = `${s3ObjectPath}${suffix}.json`;
+        params.Metadata = {
+          variation
+        };
         try {
           await s3.send(new PutObjectCommand(params));
           return new Response(`${params.Key} stored in S3 bucket`);
@@ -84,7 +93,7 @@ async function run(request, context) {
         // then it can only be evict
         try {
           const params = buildDefaultParams();
-          params.Prefix = `${mode}/${relPath}.`;
+          params.Prefix = `${s3ObjectPath}.`;
           const listResponse = await s3.send(new ListObjectsCommand(params));
           delete params.Prefix;
           const deletedKeys = [];
