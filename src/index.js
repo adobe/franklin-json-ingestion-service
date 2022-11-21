@@ -14,7 +14,7 @@ import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import {
-  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, S3Client,
+  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, CopyObjectCommand, S3Client,
 } from '@aws-sdk/client-s3';
 
 const VALID_MODES = ['preview', 'live'];
@@ -35,6 +35,61 @@ const deleteItemAction = (s3, key, deletedKeys) => new Promise((resolve, reject)
     reject(err);
   });
 });
+
+const storeInPreview = async (s3, payload, options) => {
+  if (!payload || typeof payload !== 'object') {
+    return new Response('Invalid parameters payload value, accept:{...} object', { status: 400 });
+  }
+
+  const params = buildDefaultParams();
+  params.Body = JSON.stringify(payload);
+  params.Key = `${options.s3SourceObjectPath}${options.suffix}.json`;
+  params.ContentType = 'application/json';
+  params.Metadata = {
+    variation: options.variation,
+  };
+  try {
+    await s3.send(new PutObjectCommand(params));
+    return new Response(`${params.Key} stored in S3 bucket`);
+  } catch (err) {
+    return new Response(`An error occurred while trying to store ${params.Key} in S3 bucket due to ${err.msg}`, { status: 500 });
+  }
+};
+
+const copyPreviewToLive = async (s3, options) => {
+  const params = buildDefaultParams();
+  params.CopySource = encodeURI(`${params.Bucket}/${options.s3SourceObjectPath}${options.suffix}.json`);
+  params.Key = `${options.s3TargetObjectPath}`;
+  try {
+    await s3.send(new CopyObjectCommand(params));
+    return new Response(`${params.Key} copy preview to live in S3 bucket`);
+  } catch (err) {
+    return new Response(`An error occurred while trying to copy ${params.CopySource}  to ${params.Key} in S3 bucket due to ${err.msg}`, { status: 500 });
+  }
+};
+
+const evictFromS3 = async (s3, s3ObjectPath) => {
+  // then it can only be evict
+  try {
+    const params = buildDefaultParams();
+    params.Prefix = `${s3ObjectPath}.`;
+    const listResponse = await s3.send(new ListObjectsCommand(params));
+    delete params.Prefix;
+    const deletedKeys = [];
+    const promises = [];
+    for (const item of listResponse.Contents) {
+      promises.push(deleteItemAction(s3, item.Key, deletedKeys));
+    }
+    await Promise.all(promises);
+    if (deletedKeys.length > 0) {
+      return new Response(`${deletedKeys} deleted in S3 bucket`);
+    } else {
+      return new Response('Nothing to delete in S3 bucket');
+    }
+  } catch (err) {
+    return new Response('An error occurred while trying to delete a key in S3 bucket', { status: 500 });
+  }
+};
 
 /**
  * This is the main function
@@ -70,47 +125,32 @@ async function run(request, context) {
       const variation = json.variation || 'master';
       const suffix = variation !== 'master' ? `.${variation}` : '';
       const s3 = new S3Client();
-      const s3ObjectPath = `${tenant}/${mode}/${relPath}`;
-      if (action === 'store') {
-        const { payload } = json;
-        if (!payload || typeof payload !== 'object') {
-          return new Response('Invalid parameters payload value, accept:{...} object', { status: 400 });
-        }
+      const s3SourceObjectPath = `${tenant}/preview/${relPath}`;
+      const s3TargetObjectPath = `${tenant}/live/${relPath}`;
+      const { payload } = json;
 
-        const params = buildDefaultParams();
-        params.Body = JSON.stringify(payload);
-        params.Key = `${s3ObjectPath}${suffix}.json`;
-        params.ContentType = "application/json";
-        params.Metadata = {
-          "variation": variation
-        };
-        try {
-          await s3.send(new PutObjectCommand(params));
-          return new Response(`${params.Key} stored in S3 bucket`);
-        } catch (err) {
-          return new Response(`An error occurred while trying to store ${params.Key} in S3 bucket`, { status: 500 });
+      if (mode === 'live') {
+        // Either copy from preview or remove object
+        if (action === 'store') {
+          return copyPreviewToLive(s3, {
+            s3SourceObjectPath,
+            s3TargetObjectPath,
+            suffix,
+          });
+        } else {
+          // evict from live
+          return evictFromS3(s3, s3TargetObjectPath);
         }
+      } else if (action === 'store') {
+        // store to preview
+        return storeInPreview(s3, payload, {
+          suffix,
+          s3SourceObjectPath,
+          variation,
+        });
       } else {
-        // then it can only be evict
-        try {
-          const params = buildDefaultParams();
-          params.Prefix = `${s3ObjectPath}.`;
-          const listResponse = await s3.send(new ListObjectsCommand(params));
-          delete params.Prefix;
-          const deletedKeys = [];
-          const promises = [];
-          for (const item of listResponse.Contents) {
-            promises.push(deleteItemAction(s3, item.Key, deletedKeys));
-          }
-          await Promise.all(promises);
-          if (deletedKeys.length > 0) {
-            return new Response(`${deletedKeys} deleted in S3 bucket`);
-          } else {
-            return new Response('Nothing to delete in S3 bucket');
-          }
-        } catch (err) {
-          return new Response('An error occurred while trying to delete a key in S3 bucket', { status: 500 });
-        }
+        // evict from live and preview
+        return evictFromS3(s3, s3SourceObjectPath);
       }
     } catch (parseError) {
       return new Response(`Error while parsing the body as json due to ${parseError}`, { status: 400 });
