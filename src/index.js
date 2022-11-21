@@ -52,7 +52,7 @@ const storeInPreview = async (s3, payload, options) => {
     await s3.send(new PutObjectCommand(params));
     return new Response(`${params.Key} stored in S3 bucket`);
   } catch (err) {
-    return new Response(`An error occurred while trying to store ${params.Key} in S3 bucket due to ${err.msg}`, { status: 500 });
+    return new Response(`An error occurred while trying to store ${params.Key} in S3 bucket due to ${err.message}`, { status: 500 });
   }
 };
 
@@ -64,7 +64,7 @@ const copyPreviewToLive = async (s3, options) => {
     await s3.send(new CopyObjectCommand(params));
     return new Response(`${params.Key} copy preview to live in S3 bucket`);
   } catch (err) {
-    return new Response(`An error occurred while trying to copy ${params.CopySource}  to ${params.Key} in S3 bucket due to ${err.msg}`, { status: 500 });
+    return new Response(`An error occurred while trying to copy ${params.CopySource}  to ${params.Key} in S3 bucket due to ${err.message}`, { status: 500 });
   }
 };
 
@@ -153,7 +153,7 @@ async function run(request, context) {
         return evictFromS3(s3, s3SourceObjectPath);
       }
     } catch (parseError) {
-      return new Response(`Error while parsing the body as json due to ${parseError}`, { status: 400 });
+      return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
     }
   }
 }
