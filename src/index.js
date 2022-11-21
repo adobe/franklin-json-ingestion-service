@@ -43,7 +43,7 @@ const storeInPreview = async (s3, payload, options) => {
 
   const params = buildDefaultParams();
   params.Body = JSON.stringify(payload);
-  params.Key = `${options.s3SourceObjectPath}${options.suffix}.json`;
+  params.Key = `${options.s3ObjectPath}${options.suffix}.json`;
   params.ContentType = 'application/json';
   params.Metadata = {
     variation: options.variation,
@@ -59,7 +59,7 @@ const storeInPreview = async (s3, payload, options) => {
 const copyPreviewToLive = async (s3, options) => {
   const params = buildDefaultParams();
   params.CopySource = encodeURI(`${params.Bucket}/${options.s3SourceObjectPath}${options.suffix}.json`);
-  params.Key = `${options.s3TargetObjectPath}`;
+  params.Key = `${options.s3TargetObjectPath}${options.suffix}.json`;
   try {
     await s3.send(new CopyObjectCommand(params));
     return new Response(`${params.Key} copy preview to live in S3 bucket`);
@@ -125,32 +125,32 @@ async function run(request, context) {
       const variation = json.variation || 'master';
       const suffix = variation !== 'master' ? `.${variation}` : '';
       const s3 = new S3Client();
-      const s3SourceObjectPath = `${tenant}/preview/${relPath}`;
-      const s3TargetObjectPath = `${tenant}/live/${relPath}`;
+      const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+      const s3LiveObjectPath = `${tenant}/live/${relPath}`;
       const { payload } = json;
 
       if (mode === 'live') {
         // Either copy from preview or remove object
         if (action === 'store') {
           return copyPreviewToLive(s3, {
-            s3SourceObjectPath,
-            s3TargetObjectPath,
+            s3SourceObjectPath: s3PreviewObjectPath,
+            s3TargetObjectPath: s3LiveObjectPath,
             suffix,
           });
         } else {
           // evict from live
-          return evictFromS3(s3, s3TargetObjectPath);
+          return evictFromS3(s3, s3LiveObjectPath);
         }
       } else if (action === 'store') {
         // store to preview
         return storeInPreview(s3, payload, {
           suffix,
-          s3SourceObjectPath,
+          s3ObjectPath: s3PreviewObjectPath,
           variation,
         });
       } else {
         // evict from live and preview
-        return evictFromS3(s3, s3SourceObjectPath);
+        return evictFromS3(s3, s3PreviewObjectPath);
       }
     } catch (parseError) {
       return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
