@@ -13,83 +13,10 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
-import {
-  DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, CopyObjectCommand, S3Client,
-} from '@aws-sdk/client-s3';
+import Storage from './storage.js';
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict'];
-
-const buildDefaultParams = () => ({
-  Bucket: 'franklin-content-bus-headless',
-});
-
-const deleteItemAction = (s3, key, deletedKeys) => new Promise((resolve, reject) => {
-  const params = buildDefaultParams();
-  params.Key = key;
-  s3.send(new DeleteObjectCommand(params)).then(
-    (_) => {
-      deletedKeys.push(params.Key);
-      resolve();
-    },
-  ).catch((err) => {
-    reject(err);
-  });
-});
-
-const storeInPreview = async (s3, payload, options) => {
-  if (!payload || typeof payload !== 'object') {
-    return new Response('Invalid parameters payload value, accept:{...} object', { status: 400 });
-  }
-
-  const params = buildDefaultParams();
-  params.Body = JSON.stringify(payload);
-  params.Key = `${options.s3ObjectPath}${options.suffix}.json`;
-  params.ContentType = 'application/json';
-  params.Metadata = {
-    variation: options.variation,
-  };
-  try {
-    await s3.send(new PutObjectCommand(params));
-    return new Response(`${params.Key} stored in S3 bucket`);
-  } catch (err) {
-    return new Response(`An error occurred while trying to store ${params.Key} in S3 bucket due to ${err.message}`, { status: 500 });
-  }
-};
-
-const copyPreviewToLive = async (s3, options) => {
-  const params = buildDefaultParams();
-  params.CopySource = encodeURI(`${params.Bucket}/${options.s3SourceObjectPath}${options.suffix}.json`);
-  params.Key = `${options.s3TargetObjectPath}${options.suffix}.json`;
-  try {
-    await s3.send(new CopyObjectCommand(params));
-    return new Response(`${params.Key} copy preview to live in S3 bucket`);
-  } catch (err) {
-    return new Response(`An error occurred while trying to copy ${params.CopySource}  to ${params.Key} in S3 bucket due to ${err.message}`, { status: 500 });
-  }
-};
-
-const evictFromS3 = async (s3, s3ObjectPath) => {
-  try {
-    const params = buildDefaultParams();
-    params.Prefix = `${s3ObjectPath}.`;
-    const listResponse = await s3.send(new ListObjectsCommand(params));
-    delete params.Prefix;
-    const deletedKeys = [];
-    const promises = [];
-    for (const item of listResponse.Contents) {
-      promises.push(deleteItemAction(s3, item.Key, deletedKeys));
-    }
-    await Promise.all(promises);
-    if (deletedKeys.length > 0) {
-      return new Response(`${deletedKeys} deleted in S3 bucket`);
-    } else {
-      return new Response('Nothing to delete in S3 bucket');
-    }
-  } catch (err) {
-    return new Response('An error occurred while trying to delete a key in S3 bucket', { status: 500 });
-  }
-};
 
 /**
  * This is the main function
@@ -103,57 +30,67 @@ async function run(request, context) {
   } else if (request.headers.get('Content-Type') !== 'application/json') {
     return new Response('Invalid request content type please check the API for details', { status: 400 });
   } else {
-    try {
-      const json = await request.json();
-      context.log.info(`body: ${JSON.stringify(json)}`);
-      const { tenant } = json;
-      if (!tenant || !tenant.match(/[a-zA-Z0-9]*/g)) {
-        return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9]', { status: 400 });
-      }
-      const { relPath } = json;
-      if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
-        return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
-      }
-      const mode = json.mode || 'preview';
-      if (!VALID_MODES.includes(mode)) {
-        return new Response(`Invalid parameters mode value, accept:${VALID_MODES}`, { status: 400 });
-      }
-      const action = json.action || 'store';
-      if (!VALID_ACTIONS.includes(action)) {
-        return new Response(`Invalid parameters action value, accept:${VALID_ACTIONS}`, { status: 400 });
-      }
-      const variation = json.variation || 'master';
-      const suffix = variation !== 'master' ? `.${variation}` : '';
-      const s3 = new S3Client();
-      const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
-      const s3LiveObjectPath = `${tenant}/live/${relPath}`;
-      const { payload } = json;
+    let json;
 
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
+    }
+
+    context.log.info(`body: ${JSON.stringify(json)}`);
+    const { tenant } = json;
+    if (!tenant || !tenant.match(/[a-zA-Z0-9]*/g)) {
+      return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9]', { status: 400 });
+    }
+    const { relPath } = json;
+    if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
+      return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
+    }
+    const mode = json.mode || 'preview';
+    if (!VALID_MODES.includes(mode)) {
+      return new Response(`Invalid parameters mode value, accept:${VALID_MODES}`, { status: 400 });
+    }
+    const action = json.action || 'store';
+    if (!VALID_ACTIONS.includes(action)) {
+      return new Response(`Invalid parameters action value, accept:${VALID_ACTIONS}`, { status: 400 });
+    }
+    const { variation } = json;
+    const suffix = variation ? `.${variation}` : '';
+    const storage = new Storage();
+    const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+    const s3LiveObjectPath = `${tenant}/live/${relPath}`;
+    const { payload } = json;
+
+    try {
       if (mode === 'live') {
         // Either copy from preview or remove object
         if (action === 'store') {
-          return copyPreviewToLive(s3, {
-            s3SourceObjectPath: s3PreviewObjectPath,
-            s3TargetObjectPath: s3LiveObjectPath,
-            suffix,
-          });
+          const k = await storage.copyKey(
+            `${s3PreviewObjectPath}${suffix}.json`,
+            `${s3LiveObjectPath}${suffix}.json`,
+          );
+          return new Response(`${k} stored`);
         } else {
           // evict from live
-          return evictFromS3(s3, s3LiveObjectPath);
+          const ks = await storage.evictKeys(s3LiveObjectPath);
+          return new Response(`${ks} evicted`);
         }
       } else if (action === 'store') {
         // store to preview
-        return storeInPreview(s3, payload, {
-          suffix,
-          s3ObjectPath: s3PreviewObjectPath,
+        const k = await storage.putKey(
+          `${s3PreviewObjectPath}${suffix}.json`,
+          payload,
           variation,
-        });
+        );
+        return new Response(`${k} stored`);
       } else {
         // evict from live and preview
-        return evictFromS3(s3, s3PreviewObjectPath);
+        const ks = await storage.evictKeys(s3PreviewObjectPath);
+        return new Response(`${ks} evicted`);
       }
-    } catch (parseError) {
-      return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
+    } catch (err) {
+      return new Response(`${err.message}`, { status: 500 });
     }
   }
 }
