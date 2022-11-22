@@ -19,6 +19,7 @@ import {
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict'];
+
 const buildDefaultParams = () => ({
   Bucket: 'franklin-content-bus-headless',
 });
@@ -69,7 +70,6 @@ const copyPreviewToLive = async (s3, options) => {
 };
 
 const evictFromS3 = async (s3, s3ObjectPath) => {
-  // then it can only be evict
   try {
     const params = buildDefaultParams();
     params.Prefix = `${s3ObjectPath}.`;
