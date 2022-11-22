@@ -63,31 +63,25 @@ async function run(request, context) {
     const { payload } = json;
 
     try {
-      if (mode === 'live') {
-        // Either copy from preview or remove object
-        if (action === 'store') {
+      if (action === 'store') {
+        if (mode === 'live') {
           const k = await storage.copyKey(
             `${s3PreviewObjectPath}${suffix}.json`,
             `${s3LiveObjectPath}${suffix}.json`,
           );
           return new Response(`${k} stored`);
         } else {
-          // evict from live
-          const ks = await storage.evictKeys(s3LiveObjectPath);
-          return new Response(`${ks} evicted`);
+          // store to preview
+          const k = await storage.putKey(
+            `${s3PreviewObjectPath}${suffix}.json`,
+            payload,
+            variation,
+          );
+          return new Response(`${k} stored`);
         }
-      } else if (action === 'store') {
-        // store to preview
-        const k = await storage.putKey(
-          `${s3PreviewObjectPath}${suffix}.json`,
-          payload,
-          variation,
-        );
-        return new Response(`${k} stored`);
       } else {
-        // evict from live and preview
-        const ks = await storage.evictKeys(s3PreviewObjectPath);
-        return new Response(`${ks} evicted`);
+        const ks = await storage.evictKeys(mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath);
+        return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
       }
     } catch (err) {
       return new Response(`${err.message}`, { status: 500 });
