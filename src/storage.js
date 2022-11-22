@@ -114,8 +114,8 @@ export default class Storage {
       const listObject = await this.listKeys(`${prefix}.`);
       await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
         Delete: {
-          Objects: listObject
-        }
+          Objects: listObject,
+        },
       })));
       return listObject;
     } catch (err) {

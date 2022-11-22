@@ -12,7 +12,8 @@
 
 /* eslint-env mocha */
 import {
-  S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, ListObjectsV2Command, DeleteObjectsCommand,
+  S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand,
+  ListObjectsV2Command, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
