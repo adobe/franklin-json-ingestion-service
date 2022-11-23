@@ -27,7 +27,7 @@ export default class Storage {
     this.bucket = 'franklin-content-bus-headless';
   }
 
-  buildDefaultParams(options) {
+  buildDefaultParams(options = {}) {
     return {
       Bucket: this.bucket,
       ...options,
