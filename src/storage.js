@@ -22,7 +22,9 @@ import zlib from 'zlib';
 function gzipify(str) {
   return new Promise((resolve, reject) => {
     zlib.gzip(str, (err, buffer) => {
+      /* c8 ignore next */
       if (err) {
+        /* c8 ignore next */
         reject(err);
       } else {
         resolve(buffer);
@@ -87,7 +89,7 @@ export default class Storage {
       return targetKey;
     } catch (err) {
       throw new Error(
-        `An error occurred while trying to copy ${sourceKey}  to ${targetKey} in S3 bucket due to ${err.message}`,
+        `An error occurred while trying to copy ${sourceKey} to ${targetKey} in S3 bucket due to ${err.message}`,
       );
     }
   }
@@ -119,7 +121,7 @@ export default class Storage {
       })));
       return listObject;
     } catch (err) {
-      throw new Error(`An error occurred while trying to delete a key in S3 bucket due to ${err}`);
+      throw new Error(`An error occurred while trying to evict key(s) in S3 bucket due to ${err}`);
     }
   }
 }

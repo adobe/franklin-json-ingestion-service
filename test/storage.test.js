@@ -30,6 +30,28 @@ describe('Storage Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
     assert.strictEqual(result, key);
   });
+  it('putKey fails on invalid payload value', async () => {
+    const key = 'local/preview/a/b/c.json';
+    const payload = 10;
+    await assert.rejects(
+      async () => new Storage().putKey(key, payload),
+      {
+        message: 'Invalid parameters payload value, accept:{...} object',
+      },
+    );
+  });
+  it('putKey fails on internal operation error', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(PutObjectCommand).rejects('Invalid Operation');
+    const key = 'local/preview/a/b/c.json';
+    const payload = { };
+    await assert.rejects(
+      async () => new Storage().putKey(key, payload),
+      {
+        message: 'An error occurred while trying to store local/preview/a/b/c.json in S3 bucket due to Invalid Operation',
+      },
+    );
+  });
   it('deleteKey call DeleteObjectCommand one time', async () => {
     const s3Mock = mockClient(S3Client);
     const key = 'local/preview/a/b/c.json';
@@ -44,6 +66,31 @@ describe('Storage Tests', () => {
     const result = await new Storage().copyKey(sourceKey, targetKey);
     assert.strictEqual(s3Mock.commandCalls(CopyObjectCommand).length, 1);
     assert.strictEqual(result, targetKey);
+  });
+  it('copyKey fails on internal operation error', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(CopyObjectCommand).rejects('Invalid Operation');
+    const sourceKey = 'local/preview/a/b/c.json';
+    const targetKey = 'local/live/a/b/c.json';
+    await assert.rejects(
+      async () => new Storage().copyKey(sourceKey, targetKey),
+      {
+        message: `An error occurred while trying to copy ${sourceKey} to ${targetKey} in S3 bucket due to Invalid Operation`,
+      },
+    );
+  });
+  it('listKeys call ListObjectsV2Command 1 time with empty Contents', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command, {
+      Bucket: 'franklin-content-bus-headless',
+      Prefix: 'local/preview/a/b/c.',
+    }).resolves({
+      IsTruncated: false,
+    });
+    const keyPrefix = 'local/preview/a/b/c.';
+    const result = await new Storage().listKeys(keyPrefix);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 1);
+    assert.strictEqual(result.length, 0);
   });
   it('listKeys call ListObjectsV2Command 2 times', async () => {
     const s3Mock = mockClient(S3Client);

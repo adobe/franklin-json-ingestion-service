@@ -40,8 +40,8 @@ async function run(request, context) {
 
     context.log.info(`body: ${JSON.stringify(json)}`);
     const { tenant } = json;
-    if (!tenant || !tenant.match(/[a-zA-Z0-9]*/g)) {
-      return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9]', { status: 400 });
+    if (!tenant || !tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
+      return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]', { status: 400 });
     }
     const { relPath } = json;
     if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {

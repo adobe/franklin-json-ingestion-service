@@ -23,7 +23,7 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'Currently only POST is implemented');
     assert.strictEqual(await result.status, 405);
   });
-  it('store in preview success', async () => {
+  it('stores in preview as implicit operation', async () => {
     mockClient(S3Client);
     const result = await main(
       new Request(
@@ -32,8 +32,6 @@ describe('Index Tests', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            action: 'store',
-            mode: 'preview',
             tenant: 'local',
             relPath: 'a/b/c',
             payload: {
@@ -47,7 +45,184 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.json stored');
     assert.strictEqual(await result.status, 200);
   });
-  it('store in live success', async () => {
+  it('stores variation', async () => {
+    mockClient(S3Client);
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            variation: 'max',
+            payload: {
+              test: 'value',
+            },
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.max.json stored');
+    assert.strictEqual(await result.status, 200);
+  });
+
+  it('fails on invalid content-type', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'text/html' },
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid request content type please check the API for details');
+  });
+  it('fails on missing tenant', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{}',
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]');
+  });
+  it('fails on missing relPath', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid relPath type', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 10,
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid relPath value', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: '/a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid mode value', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            mode: 'any',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters mode value, accept:preview,live');
+  });
+  it('fails on invalid action value', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            mode: 'preview',
+            action: 'any',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters action value, accept:store,evict');
+  });
+  it('fails on invalid tenant value', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'some+id',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]');
+  });
+  it('fails on invalid json payload', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{ test: invalid, }',
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.text(), 'Error while parsing the body as json due to Unexpected token t in JSON at position 2');
+  });
+  it('stores in live success', async () => {
     mockClient(S3Client);
     const result = await main(
       new Request(
@@ -68,7 +243,7 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json stored');
     assert.strictEqual(await result.status, 200);
   });
-  it('delete in preview success', async () => {
+  it('evicts in preview success', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
@@ -97,7 +272,7 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.json,local/preview/a/b/c.v1.json,local/preview/a/b/c.v2.json evicted');
     assert.strictEqual(await result.status, 200);
   });
-  it('delete in live success', async () => {
+  it('evicts in live success', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
@@ -125,5 +300,27 @@ describe('Index Tests', () => {
     );
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.v1.json,local/live/a/b/c.v2.json evicted');
     assert.strictEqual(await result.status, 200);
+  });
+  it('fails on internal error', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command).rejects();
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'live',
+            action: 'evict',
+            tenant: 'local',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.status, 500);
+    assert.strictEqual(await result.text(), 'An error occurred while trying to evict key(s) in S3 bucket due to Error');
   });
 });
