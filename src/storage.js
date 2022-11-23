@@ -16,22 +16,10 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { promisify } from 'util';
 import zlib from 'zlib';
 
-// Helper Promise function to wrap node zlib.gzip(..)
-function gzipify(str) {
-  return new Promise((resolve, reject) => {
-    zlib.gzip(str, (err, buffer) => {
-      /* c8 ignore next */
-      if (err) {
-        /* c8 ignore next */
-        reject(err);
-      } else {
-        resolve(buffer);
-      }
-    });
-  });
-}
+const gzip = promisify(zlib.gzip);
 
 export default class Storage {
   constructor() {
@@ -60,7 +48,7 @@ export default class Storage {
     }
 
     const params = this.buildDefaultParams({
-      Body: await gzipify(JSON.stringify(payload)),
+      Body: await gzip(JSON.stringify(payload)),
       Key: key,
       ContentType: 'application/json',
       ContentEncoding: 'gzip',
