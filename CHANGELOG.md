@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.2.0...v1.3.0) (2022-11-24)
+
+
+### Features
+
+* SITES-9481 Initial implementation ([#10](https://github.com/adobe/franklin-json-ingestion-service/issues/10)) ([3a91661](https://github.com/adobe/franklin-json-ingestion-service/commit/3a916618b73718a2ba92a54c9099ff90e8f30c92))
+
 # [1.2.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.1.0...v1.2.0) (2022-11-17)
 
 
