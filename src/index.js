@@ -13,7 +13,10 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import Storage from './storage.js';
+
+const VALID_MODES = ['preview', 'live'];
+const VALID_ACTIONS = ['store', 'evict'];
 
 /**
  * This is the main function
@@ -22,19 +25,68 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
  * @returns {Response} a response
  */
 async function run(request, context) {
-  const name = new URL(request.url).searchParams.get('name') || 'world';
-  context.log.info(`Saying hello to: ${name}.`);
-  if (name === 's3') {
-    const s3 = new S3Client();
-    const response = await s3.send(new GetObjectCommand({
-      Bucket: 'franklin-content-bus-headless',
-      Key: 'test.json',
-    }));
-    const ret = new Response(response.Body);
-    const json = await ret.buffer();
-    return new Response(`Hello. The json is: ${json}`);
+  if (request.method !== 'POST') {
+    return new Response('Currently only POST is implemented', { status: 405 });
+  } else if (request.headers.get('Content-Type') !== 'application/json') {
+    return new Response('Invalid request content type please check the API for details', { status: 400 });
+  } else {
+    let json;
+
+    try {
+      json = await request.json();
+    } catch (parseError) {
+      return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
+    }
+
+    context.log.info(`body: ${JSON.stringify(json)}`);
+    const { tenant } = json;
+    if (!tenant || !tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
+      return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]', { status: 400 });
+    }
+    const { relPath } = json;
+    if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
+      return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
+    }
+    const mode = json.mode || 'preview';
+    if (!VALID_MODES.includes(mode)) {
+      return new Response(`Invalid parameters mode value, accept:${VALID_MODES}`, { status: 400 });
+    }
+    const action = json.action || 'store';
+    if (!VALID_ACTIONS.includes(action)) {
+      return new Response(`Invalid parameters action value, accept:${VALID_ACTIONS}`, { status: 400 });
+    }
+    const { variation } = json;
+    const suffix = variation ? `.${variation}` : '';
+    const storage = new Storage();
+    const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+    const s3LiveObjectPath = `${tenant}/live/${relPath}`;
+    const { payload } = json;
+
+    try {
+      if (action === 'store') {
+        if (mode === 'live') {
+          const k = await storage.copyKey(
+            `${s3PreviewObjectPath}${suffix}.json`,
+            `${s3LiveObjectPath}${suffix}.json`,
+          );
+          return new Response(`${k} stored`);
+        } else {
+          // store to preview
+          const k = await storage.putKey(
+            `${s3PreviewObjectPath}${suffix}.json`,
+            payload,
+            variation,
+          );
+          return new Response(`${k} stored`);
+        }
+      } else {
+        const ks = await storage.evictKeys(mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath);
+        return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
+      }
+    } catch (err) {
+      return new Response(`${err.message}`, { status: 500 });
+    }
   }
-  return new Response(`Hello, ${name}. Have a nice day.`);
 }
 
 export const main = wrap(run)
