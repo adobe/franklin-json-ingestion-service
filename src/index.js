@@ -62,7 +62,6 @@ async function run(request, context) {
       return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
     }
 
-    context.log.info(`body: ${JSON.stringify(json)}`);
     const { tenant } = json;
     if (!tenant || !tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
       return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]', { status: 400 });
@@ -89,20 +88,29 @@ async function run(request, context) {
     try {
       if (action === 'store') {
         if (mode === 'live') {
+          const sourceKey = `${s3PreviewObjectPath}.json${suffix}`;
+          const targetKey = `${s3LiveObjectPath}.json${suffix}`;
           const k = await storage.copyKey(
-            `${s3PreviewObjectPath}.json${suffix}`,
-            `${s3LiveObjectPath}.json${suffix}`,
+            sourceKey,
+            targetKey,
           );
-          await storage.evictKey(`${s3LiveObjectPath}.json${suffix}/cache`);
+          context.log.info("copyKey from ${sourceKey} to ${targetKey} success")
+          const cacheKey = `${s3LiveObjectPath}.json${suffix}/cache`;
+          await storage.evictKey(cacheKey);
+          context.log.info("evictKey ${cacheKey} success")
           return new Response(`${k} stored`);
         } else {
           // store to preview
+          const storedKey = `${s3PreviewObjectPath}.json${suffix}`;
           const k = await storage.putKey(
-            `${s3PreviewObjectPath}.json${suffix}`,
+            storedKey,
             payload,
             variation,
           );
-          await storage.evictKey(`${s3PreviewObjectPath}.json${suffix}/cache`);
+          context.log.info("putKey ${storedKey} success")
+          const cacheKey = `${s3PreviewObjectPath}.json${suffix}/cache`;
+          await storage.evictKey(cacheKey);
+          context.log.info("evictKey ${cacheKey} success")
           return new Response(`${k} stored`);
         }
       } else {
