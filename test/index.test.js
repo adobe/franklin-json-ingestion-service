@@ -12,6 +12,7 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
+import { Readable } from 'stream';
 import { Request } from '@adobe/fetch';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
@@ -41,9 +42,7 @@ describe('Index Tests', () => {
     const mockedData = await gzip(source);
     s3Mock.on(GetObjectCommand)
       .resolvesOnce({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       });
 
     const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});

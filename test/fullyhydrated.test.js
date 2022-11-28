@@ -15,6 +15,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { promisify } from 'util';
 import zlib from 'zlib';
+import { Readable } from 'stream';
 import FullyHydrated from '../src/fullyhydrated.js';
 
 const gzip = promisify(zlib.gzip);
@@ -56,17 +57,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/h/i/j.json/cache',
       })
       .resolves({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/e/f/g.json/cache',
       })
       .resolves({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const results = await fullyHydrated.loadFullyHydratedFromReferences(['/h/i/j', '/e/f/g']);
@@ -90,14 +87,6 @@ describe('Fully Hydrated Tests', () => {
     const mockedModelData = await gzip(JSON.stringify(modelSource));
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/r/t/u.json/cache',
-      })
-      .rejects('Not found')
-      .on(GetObjectCommand, {
-        Key: 'tenant/preview/r/t/u.json/variations/max_22/cache',
-      })
-      .rejects('Not found')
-      .on(GetObjectCommand, {
         Key: 'tenant/preview/r/t/u.json/variations/max_22',
       })
       .rejects('Not found')
@@ -105,21 +94,36 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/r/t/u.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedModelData,
-        },
+        Body: Readable.from(mockedModelData),
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/r/t/u', 'max_22');
     const fallbackJson = await fullyHydrated.computeFullyHydrated();
     assert.deepEqual(fallbackJson, source);
+  });
+  it('computeFullyHydrated from CF return null on missing model', async () => {
+    const s3Mock = mockClient(S3Client);
+    const source = { _model: { _path: '/_model_/model1' }, test: 'data' };
+    const mockedData = await gzip(JSON.stringify(source));
+    s3Mock
+      .on(GetObjectCommand, {
+        Key: 'tenant/preview/r/t/u.json',
+      })
+      .resolves({
+        Body: Readable.from(mockedData),
+      })
+      .on(GetObjectCommand, {
+        Key: 'tenant/preview/_model_/model1.json',
+      })
+      .rejects('No Model Found');
+    const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/r/t/u', '');
+    const resultingJson = await fullyHydrated.computeFullyHydrated();
+    assert.strictEqual(resultingJson, null);
   });
   it('getModel returns null if model is missing', async () => {
     const s3Mock = mockClient(S3Client);
@@ -199,25 +203,22 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
-      .resolves({
-        Body: {
-          read: () => mockedModelData,
-        },
+      .resolvesOnce({
+        Body: Readable.from(mockedModelData),
+      })
+      .resolvesOnce({
+        Body: Readable.from(mockedModelData),
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/u/v/w.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedData2,
-        },
+        Body: Readable.from(mockedData2),
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const fullyHydratedJson = await fullyHydrated.getFullyHydrated();
@@ -253,17 +254,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: {
-          read: () => mockedModelData,
-        },
+        Body: Readable.from(mockedModelData),
       })
       .on(PutObjectCommand)
       .rejects('Put Error');

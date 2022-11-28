@@ -23,6 +23,16 @@ export function extractCFReferencesProperties(modelJson) {
   return result;
 }
 
+export function stream2buffer(stream) {
+  return new Promise((resolve, reject) => {
+    const buf = [];
+
+    stream.on('data', (chunk) => buf.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(buf)));
+    stream.on('error', (err) => reject(err));
+  });
+}
+
 export function replaceRefsWithObject(propKeys, target, referenceToObjectMapping) {
   const finalObject = target;
   propKeys.forEach((propKey) => {

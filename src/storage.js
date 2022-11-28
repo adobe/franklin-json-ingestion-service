@@ -19,7 +19,7 @@ import {
 import processQueue from '@adobe/helix-shared-process-queue';
 import { promisify } from 'util';
 import zlib from 'zlib';
-import { cloneObject } from './utils.js';
+import { cloneObject, stream2buffer } from './utils.js';
 import { DEFAULT_BUCKET } from './constants.js';
 
 const gzip = promisify(zlib.gzip);
@@ -84,7 +84,8 @@ export default class Storage {
 
     try {
       const data = await this.s3.send(new GetObjectCommand(params));
-      return JSON.parse(await gunzip(data.Body.read()));
+      const buffer = await stream2buffer(data.Body);
+      return JSON.parse(await gunzip(buffer));
     } catch (err) {
       if (attempt <= 1) {
         throw new Error(

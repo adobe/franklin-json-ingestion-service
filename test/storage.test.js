@@ -19,6 +19,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
 import { promisify } from 'util';
 import zlib from 'zlib';
+import { Readable } from 'stream';
 import Storage from '../src/storage.js';
 
 const gzip = promisify(zlib.gzip);
@@ -134,9 +135,7 @@ describe('Storage Tests', () => {
       .on(GetObjectCommand)
       .rejectsOnce('Error')
       .resolvesOnce({
-        Body: {
-          read: () => mockedData,
-        },
+        Body: Readable.from(mockedData),
       });
     const key = 'local/preview/a/b/c.json';
     const result = await new Storage().getKey(key);
