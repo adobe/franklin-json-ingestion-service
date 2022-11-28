@@ -42,7 +42,7 @@ createTargets().forEach((target) => {
 
     it('invokes the function', async () => {
       const res = await fetch(`${target.host()}${target.urlPath()}`);
-      assert.strictEqual(res.status, 405);
+      assert.strictEqual(res.status, 400);
     }).timeout(50000);
   });
 });
