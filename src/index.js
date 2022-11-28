@@ -94,10 +94,10 @@ async function run(request, context) {
             sourceKey,
             targetKey,
           );
-          context.log.info("copyKey from ${sourceKey} to ${targetKey} success")
+          context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
           const cacheKey = `${s3LiveObjectPath}.json${suffix}/cache`;
           await storage.evictKey(cacheKey);
-          context.log.info("evictKey ${cacheKey} success")
+          context.log.info(`evictKey ${cacheKey} success`);
           return new Response(`${k} stored`);
         } else {
           // store to preview
@@ -107,10 +107,10 @@ async function run(request, context) {
             payload,
             variation,
           );
-          context.log.info("putKey ${storedKey} success")
+          context.log.info(`putKey ${storedKey} success`);
           const cacheKey = `${s3PreviewObjectPath}.json${suffix}/cache`;
           await storage.evictKey(cacheKey);
-          context.log.info("evictKey ${cacheKey} success")
+          context.log.info(`evictKey ${cacheKey} success`);
           return new Response(`${k} stored`);
         }
       } else {
