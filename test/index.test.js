@@ -13,15 +13,41 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { Request } from '@adobe/fetch';
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
+import { promisify } from 'util';
+import zlib from 'zlib';
 import { main } from '../src/index.js';
+import { SERVICE_ENDPOINT_NAME } from '../src/constants.js';
+
+const gzip = promisify(zlib.gzip);
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await main(new Request('https://localhost/'), {});
-    assert.strictEqual(await result.text(), 'Currently only POST is implemented');
+    assert.strictEqual(await result.status, 400);
+  });
+  it('only GET or POST allowed', async () => {
+    const result = await main(new Request('https://localhost/', { method: 'PUT' }), {});
     assert.strictEqual(await result.status, 405);
+  });
+  it('return 404 on valid GET request and resource is not found', async () => {
+    const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});
+    assert.strictEqual(await result.status, 404);
+  });
+  it('return 200 on valid GET request and resource found', async () => {
+    const s3Mock = mockClient(S3Client);
+    const source = JSON.stringify({ _path: '/a/b/c', _model: '/_model_/model1' });
+    const mockedData = await gzip(source);
+    s3Mock.on(GetObjectCommand)
+      .resolvesOnce({
+        Body: {
+          read: () => mockedData,
+        },
+      });
+
+    const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});
+    assert.strictEqual(await result.status, 200);
   });
   it('stores in preview as implicit operation', async () => {
     mockClient(S3Client);
@@ -65,7 +91,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.max.json stored');
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json/variations/max stored');
     assert.strictEqual(await result.status, 200);
   });
 
@@ -301,9 +327,9 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.v1.json,local/live/a/b/c.v2.json evicted');
     assert.strictEqual(await result.status, 200);
   });
-  it('fails on internal error', async () => {
+  it('evict key fails on internal error', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).rejects();
+    s3Mock.on(ListObjectsV2Command).rejects('Error');
     const result = await main(
       new Request(
         'https://localhost/',

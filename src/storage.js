@@ -10,21 +10,31 @@
  * governing permissions and limitations under the License.
  */
 import {
-  CopyObjectCommand,
-  DeleteObjectCommand, DeleteObjectsCommand,
+  CopyObjectCommand, GetObjectCommand,
+  DeleteObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import processQueue from '@adobe/helix-shared-process-queue';
 import { promisify } from 'util';
 import zlib from 'zlib';
+import { cloneObject } from './utils.js';
+import { DEFAULT_BUCKET } from './constants.js';
 
 const gzip = promisify(zlib.gzip);
+const gunzip = promisify(zlib.gunzip);
 
 export default class Storage {
-  constructor() {
-    this.s3 = new S3Client();
-    this.bucket = 'franklin-content-bus-headless';
+  constructor(context) {
+    this.context = context || { log: console };
+    const s3Config = {
+      endpoint: process.env.AWS_ENDPOINT_URL || undefined,
+    };
+    this.s3 = new S3Client(s3Config);
+    this.bucket = process.env.AWS_BUCKET || DEFAULT_BUCKET;
+    this.context.log.info(`Using Bucket=${this.bucket}`);
+    this.context.log.info(`Using s3Config=${JSON.stringify(s3Config)}`);
   }
 
   buildDefaultParams(options = {}) {
@@ -67,6 +77,26 @@ export default class Storage {
     }
   }
 
+  async getKey(key, attempt = 3) {
+    const params = this.buildDefaultParams({
+      Key: key,
+    });
+
+    try {
+      const data = await this.s3.send(new GetObjectCommand(params));
+      return JSON.parse(await gunzip(data.Body.read()));
+    } catch (err) {
+      if (attempt <= 1) {
+        throw new Error(
+          `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
+        );
+      } else {
+        this.context.log.warn(`Issue while reading ${key}, retrying...`);
+        return this.getKey(key, attempt - 1);
+      }
+    }
+  }
+
   async copyKey(sourceKey, targetKey) {
     const params = this.buildDefaultParams({
       CopySource: `${this.bucket}/${sourceKey}`,
@@ -102,14 +132,27 @@ export default class Storage {
   async evictKeys(prefix) {
     try {
       const listObject = await this.listKeys(`${prefix}.`);
-      await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
-        Delete: {
-          Objects: listObject,
-        },
-      })));
-      return listObject;
+      const deletedKeys = [];
+      listObject.forEach((o) => deletedKeys.push({ Key: o.Key }));
+      await processQueue(cloneObject(deletedKeys), async (key) => this.evictKey(key));
+      this.context.log.info('evictKeys successful');
+      return deletedKeys;
     } catch (err) {
-      throw new Error(`An error occurred while trying to evict key(s) in S3 bucket due to ${err}`);
+      this.context.log.error(`evictKeys failed ${err.message}`);
+      throw new Error(`An error occurred while trying to evict key(s) in S3 bucket due to ${err.message}`);
+    }
+  }
+
+  async evictKey(key) {
+    try {
+      await this.s3.send(new DeleteObjectCommand(this.buildDefaultParams({
+        Key: key,
+      })));
+      this.context.log.info('evictKey successful');
+      return key;
+    } catch (err) {
+      this.context.log.error(`evictKey failed ${err.message}`);
+      throw new Error(`An error occurred while trying to evict key in S3 bucket due to ${err.message}`);
     }
   }
 }

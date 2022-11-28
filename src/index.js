@@ -13,10 +13,17 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
+import { promisify } from 'util';
+import zlib from 'zlib';
 import Storage from './storage.js';
+import FullyHydrated from './fullyhydrated.js';
+import RequestUtil from './request-util.js';
+import { FULLY_HYDRATED_SUFFIX } from './constants.js';
 
+const gzip = promisify(zlib.gzip);
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict'];
+const VALID_METHODS = ['GET', 'POST'];
 
 /**
  * This is the main function
@@ -25,8 +32,25 @@ const VALID_ACTIONS = ['store', 'evict'];
  * @returns {Response} a response
  */
 async function run(request, context) {
-  if (request.method !== 'POST') {
-    return new Response('Currently only POST is implemented', { status: 405 });
+  if (!VALID_METHODS.includes(request.method)) {
+    return new Response('Currently only POST | GET is implemented', { status: 405 });
+  } else if (request.method === 'GET') {
+    if (request.url.indexOf(FULLY_HYDRATED_SUFFIX) < 0) {
+      return new Response('Invalid request', { status: 400 });
+    } else {
+      const requestUtil = new RequestUtil(request);
+      const json = await new FullyHydrated(
+        context,
+        requestUtil.getKey(),
+        requestUtil.getVariation(),
+      ).getFullyHydrated();
+      if (json) {
+        const jsonGzip = await gzip(JSON.stringify(json));
+        return new Response(jsonGzip, { headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' } });
+      } else {
+        return new Response('Resource Not Found', { status: 404 });
+      }
+    }
   } else if (request.headers.get('Content-Type') !== 'application/json') {
     return new Response('Invalid request content type please check the API for details', { status: 400 });
   } else {
@@ -56,8 +80,8 @@ async function run(request, context) {
       return new Response(`Invalid parameters action value, accept:${VALID_ACTIONS}`, { status: 400 });
     }
     const { variation } = json;
-    const suffix = variation ? `.${variation}` : '';
-    const storage = new Storage();
+    const suffix = variation ? `/variations/${variation}` : '';
+    const storage = new Storage(context);
     const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
     const s3LiveObjectPath = `${tenant}/live/${relPath}`;
     const { payload } = json;
@@ -66,17 +90,19 @@ async function run(request, context) {
       if (action === 'store') {
         if (mode === 'live') {
           const k = await storage.copyKey(
-            `${s3PreviewObjectPath}${suffix}.json`,
-            `${s3LiveObjectPath}${suffix}.json`,
+            `${s3PreviewObjectPath}.json${suffix}`,
+            `${s3LiveObjectPath}.json${suffix}`,
           );
+          await storage.evictKey(`${s3LiveObjectPath}.json${suffix}/cache`);
           return new Response(`${k} stored`);
         } else {
           // store to preview
           const k = await storage.putKey(
-            `${s3PreviewObjectPath}${suffix}.json`,
+            `${s3PreviewObjectPath}.json${suffix}`,
             payload,
             variation,
           );
+          await storage.evictKey(`${s3PreviewObjectPath}.json${suffix}/cache`);
           return new Response(`${k} stored`);
         }
       } else {

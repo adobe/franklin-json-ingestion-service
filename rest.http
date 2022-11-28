@@ -50,7 +50,7 @@ content-type: application/json
 
 {
     "action": "evict",
-    "tenant": "local",
-    "relPath": "a/b/c",
-    "mode": "live"
+    "tenant": "wknd",
+    "relPath": "en/adventures/all-adventures",
+    "mode": "preview"
 }
