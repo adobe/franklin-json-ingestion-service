@@ -162,9 +162,8 @@ describe('Storage Tests', () => {
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
       Contents: [
-        { Key: 'local/preview/a/b/c.json' },
-        { Key: 'local/preview/a/b/c.v1.json' },
-        { Key: 'local/preview/a/b/c.v2.json' },
+        { Key: 'local/preview/a/b/c.json/variations/v1' },
+        { Key: 'local/preview/a/b/c.json/variations/v2' },
       ],
     });
     const keyPrefix = 'local/preview/a/b/c.';

@@ -114,7 +114,8 @@ async function run(request, context) {
           return new Response(`${k} stored`);
         }
       } else {
-        const ks = await storage.evictKeys(mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath);
+        const evictKeysPrefix = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+        const ks = await storage.evictKeys(`${evictKeysPrefix}.json`);
         return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
       }
     } catch (err) {

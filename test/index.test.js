@@ -274,9 +274,8 @@ describe('Index Tests', () => {
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
       Contents: [
-        { Key: 'local/preview/a/b/c.json' },
-        { Key: 'local/preview/a/b/c.v1.json' },
-        { Key: 'local/preview/a/b/c.v2.json' },
+        { Key: 'local/preview/a/b/c.json/variations/v1' },
+        { Key: 'local/preview/a/b/c.json/variations/v2' },
       ],
     });
     const result = await main(
@@ -295,7 +294,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json,local/preview/a/b/c.v1.json,local/preview/a/b/c.v2.json evicted');
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json,local/preview/a/b/c.json/variations/v1,local/preview/a/b/c.json/variations/v2 evicted');
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in live success', async () => {
@@ -303,9 +302,8 @@ describe('Index Tests', () => {
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
       Contents: [
-        { Key: 'local/live/a/b/c.json' },
-        { Key: 'local/live/a/b/c.v1.json' },
-        { Key: 'local/live/a/b/c.v2.json' },
+        { Key: 'local/live/a/b/c.json/variations/v1' },
+        { Key: 'local/live/a/b/c.json/variations/v2' },
       ],
     });
     const result = await main(
@@ -324,7 +322,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.v1.json,local/live/a/b/c.v2.json evicted');
+    assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.json/variations/v1,local/live/a/b/c.json/variations/v2 evicted');
     assert.strictEqual(await result.status, 200);
   });
   it('evict key fails on internal error', async () => {

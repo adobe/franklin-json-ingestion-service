@@ -131,8 +131,8 @@ export default class Storage {
 
   async evictKeys(prefix) {
     try {
-      const listObject = await this.listKeys(`${prefix}.`);
-      const deletedKeys = [];
+      const listObject = await this.listKeys(`${prefix}/`);
+      const deletedKeys = [{ Key: prefix }];
       listObject.forEach((o) => deletedKeys.push({ Key: o.Key }));
       await processQueue(cloneObject(deletedKeys), async (key) => this.evictKey(key));
       this.context.log.info('evictKeys successful');
