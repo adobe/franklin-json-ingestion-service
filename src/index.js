@@ -39,11 +39,15 @@ async function run(request, context) {
       return new Response('Invalid request', { status: 400 });
     } else {
       const requestUtil = new RequestUtil(request);
+      const startTime = Date.now();
       const json = await new FullyHydrated(
         context,
         requestUtil.getKey(),
         requestUtil.getVariation(),
       ).getFullyHydrated();
+      const endTime = Date.now();
+      const deltaTime = endTime - startTime;
+      context.log.info(`getFullyHydrated took ${deltaTime} ms`);
       if (json) {
         const jsonGzip = await gzip(JSON.stringify(json));
         return new Response(jsonGzip, { headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' } });
