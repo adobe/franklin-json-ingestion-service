@@ -17,13 +17,8 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import processQueue from '@adobe/helix-shared-process-queue';
-import { promisify } from 'util';
-import zlib from 'zlib';
-import { cloneObject, stream2buffer } from './utils.js';
+import { cloneObject } from './utils.js';
 import { DEFAULT_BUCKET } from './constants.js';
-
-const gzip = promisify(zlib.gzip);
-const gunzip = promisify(zlib.gunzip);
 
 export default class Storage {
   constructor(context) {
@@ -58,10 +53,9 @@ export default class Storage {
     }
 
     const params = this.buildDefaultParams({
-      Body: await gzip(JSON.stringify(payload)),
+      Body: JSON.stringify(payload),
       Key: key,
       ContentType: 'application/json',
-      ContentEncoding: 'gzip',
       Metadata: {
         variation,
       },
@@ -84,8 +78,7 @@ export default class Storage {
 
     try {
       const data = await this.s3.send(new GetObjectCommand(params));
-      const buffer = await stream2buffer(data.Body);
-      return JSON.parse(await gunzip(buffer));
+      return JSON.parse(data.Body.toString('utf-8'));
     } catch (err) {
       if (attempt <= 1) {
         throw new Error(

@@ -13,12 +13,8 @@
 import assert from 'assert';
 import { mockClient } from 'aws-sdk-client-mock';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { promisify } from 'util';
-import zlib from 'zlib';
-import { Readable } from 'stream';
-import FullyHydrated from '../src/fullyhydrated.js';
 
-const gzip = promisify(zlib.gzip);
+import FullyHydrated from '../src/fullyhydrated.js';
 
 const mockedContext = { log: console };
 
@@ -51,19 +47,18 @@ describe('Fully Hydrated Tests', () => {
   it('loadFullyHydratedFromReferences from CF json', async () => {
     const s3Mock = mockClient(S3Client);
     const source = JSON.stringify({ test: 'data' });
-    const mockedData = await gzip(source);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/h/i/j.json/cache',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => source },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/e/f/g.json/cache',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => source },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const results = await fullyHydrated.loadFullyHydratedFromReferences(['/h/i/j', '/e/f/g']);
@@ -83,8 +78,8 @@ describe('Fully Hydrated Tests', () => {
         },
       },
     };
-    const mockedData = await gzip(JSON.stringify(source));
-    const mockedModelData = await gzip(JSON.stringify(modelSource));
+    const mockedData = JSON.stringify(source);
+    const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/r/t/u.json/variations/max_22',
@@ -94,13 +89,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/r/t/u.json',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: Readable.from(mockedModelData),
+        Body: { toString: () => mockedModelData },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/r/t/u', 'max_22');
     const fallbackJson = await fullyHydrated.computeFullyHydrated();
@@ -109,13 +104,13 @@ describe('Fully Hydrated Tests', () => {
   it('computeFullyHydrated from CF return null on missing model', async () => {
     const s3Mock = mockClient(S3Client);
     const source = { _model: { _path: '/_model_/model1' }, test: 'data' };
-    const mockedData = await gzip(JSON.stringify(source));
+    const mockedData = JSON.stringify(source);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/r/t/u.json',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
@@ -152,7 +147,7 @@ describe('Fully Hydrated Tests', () => {
   it('getFullyHydrated returns null if model is missing', async () => {
     const s3Mock = mockClient(S3Client);
     const source = { _model: { _path: '/_model_/model1' } };
-    const mockedData = await gzip(JSON.stringify(source));
+    const mockedData = JSON.stringify(source);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/a/b/c.json/cache',
@@ -191,9 +186,9 @@ describe('Fully Hydrated Tests', () => {
         },
       },
     };
-    const mockedData = await gzip(JSON.stringify(source));
-    const mockedData2 = await gzip(JSON.stringify(source2));
-    const mockedModelData = await gzip(JSON.stringify(modelSource));
+    const mockedData = JSON.stringify(source);
+    const mockedData2 = JSON.stringify(source2);
+    const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/a/b/c.json/cache',
@@ -203,22 +198,22 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolvesOnce({
-        Body: Readable.from(mockedModelData),
+        Body: { toString: () => mockedModelData },
       })
       .resolvesOnce({
-        Body: Readable.from(mockedModelData),
+        Body: { toString: () => mockedModelData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/u/v/w.json',
       })
       .resolves({
-        Body: Readable.from(mockedData2),
+        Body: { toString: () => mockedData2 },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const fullyHydratedJson = await fullyHydrated.getFullyHydrated();
@@ -243,8 +238,8 @@ describe('Fully Hydrated Tests', () => {
         },
       },
     };
-    const mockedData = await gzip(JSON.stringify(source));
-    const mockedModelData = await gzip(JSON.stringify(modelSource));
+    const mockedData = JSON.stringify(source);
+    const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
         Key: 'tenant/preview/a/b/c.json/cache',
@@ -254,13 +249,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: Readable.from(mockedModelData),
+        Body: { toString: () => mockedModelData },
       })
       .on(PutObjectCommand)
       .rejects('Put Error');

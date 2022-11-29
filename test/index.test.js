@@ -12,16 +12,11 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
-import { Readable } from 'stream';
 import { Request } from '@adobe/fetch';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import { promisify } from 'util';
-import zlib from 'zlib';
 import { main } from '../src/index.js';
 import { SERVICE_ENDPOINT_NAME } from '../src/constants.js';
-
-const gzip = promisify(zlib.gzip);
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
@@ -39,10 +34,9 @@ describe('Index Tests', () => {
   it('return 200 on valid GET request and resource found', async () => {
     const s3Mock = mockClient(S3Client);
     const source = JSON.stringify({ _path: '/a/b/c', _model: '/_model_/model1' });
-    const mockedData = await gzip(source);
     s3Mock.on(GetObjectCommand)
       .resolvesOnce({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => source },
       });
 
     const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});

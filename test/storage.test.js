@@ -17,12 +17,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
-import { promisify } from 'util';
-import zlib from 'zlib';
-import { Readable } from 'stream';
 import Storage from '../src/storage.js';
-
-const gzip = promisify(zlib.gzip);
 
 describe('Storage Tests', () => {
   it('putKey call PutObjectCommand one time', async () => {
@@ -130,12 +125,12 @@ describe('Storage Tests', () => {
   it('getKey call GetObjectCommand 2 times', async () => {
     const s3Mock = mockClient(S3Client);
     const source = JSON.stringify({ test: 'data' });
-    const mockedData = await gzip(source);
+    const mockedData = Buffer.from(source);
     s3Mock
       .on(GetObjectCommand)
       .rejectsOnce('Error')
       .resolvesOnce({
-        Body: Readable.from(mockedData),
+        Body: { toString: () => mockedData },
       });
     const key = 'local/preview/a/b/c.json';
     const result = await new Storage().getKey(key);
