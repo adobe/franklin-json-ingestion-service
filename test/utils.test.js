@@ -133,4 +133,37 @@ describe('Utils Tests', () => {
     };
     assert.deepEqual(targetObject, expected);
   });
+  it('replaceRefsWithObject with values and unresolved ref', () => {
+    const map = {
+      '/a/b/c': { test: 1 },
+      '/h/i/j': { test: 3 },
+    };
+    const targetObject = {
+      field1: [
+        '/a/b/c',
+        '/e/f/g',
+        '/h/i/j',
+      ],
+      field2: '/e/f/g',
+      field3: '/e/f/g',
+    };
+
+    replaceRefsWithObject(
+      [
+        'field1', 'field2',
+      ],
+      targetObject,
+      map,
+    );
+    const expected = {
+      field1: [
+        { test: 1 },
+        '/e/f/g',
+        { test: 3 },
+      ],
+      field2: '/e/f/g',
+      field3: '/e/f/g',
+    };
+    assert.deepEqual(targetObject, expected);
+  });
 });

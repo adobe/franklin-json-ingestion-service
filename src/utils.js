@@ -39,11 +39,19 @@ export function replaceRefsWithObject(propKeys, target, referenceToObjectMapping
     const ref = finalObject[propKey];
     const refType = typeof ref;
     if (refType === 'string') {
-      finalObject[propKey] = referenceToObjectMapping[ref];
+      const referencedObject = referenceToObjectMapping[ref];
+      if (referencedObject) {
+        finalObject[propKey] = referencedObject;
+      }
     } else if (Array.isArray(ref)) {
       const newArray = [];
       ref.forEach((relPath) => {
-        newArray.push(referenceToObjectMapping[relPath]);
+        const referencedObject = referenceToObjectMapping[relPath];
+        if (referencedObject) {
+          newArray.push(referencedObject);
+        } else {
+          newArray.push(relPath);
+        }
       });
       finalObject[propKey] = newArray;
     }
