@@ -36,7 +36,7 @@ describe('Index Tests', () => {
     const source = JSON.stringify({ _path: '/a/b/c', _model: '/_model_/model1' });
     s3Mock.on(GetObjectCommand)
       .resolvesOnce({
-        Body: { toString: () => source },
+        Body: { transformToString: () => source },
       });
 
     const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});

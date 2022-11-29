@@ -78,7 +78,8 @@ export default class Storage {
 
     try {
       const data = await this.s3.send(new GetObjectCommand(params));
-      return JSON.parse(data.Body.toString('utf-8'));
+      const jsonString = await data.Body.transformToString('utf-8');
+      return JSON.parse(jsonString);
     } catch (err) {
       throw new Error(
         `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,

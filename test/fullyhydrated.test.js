@@ -52,13 +52,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/h/i/j.json/cache',
       })
       .resolves({
-        Body: { toString: () => source },
+        Body: { transformToString: () => source },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/e/f/g.json/cache',
       })
       .resolves({
-        Body: { toString: () => source },
+        Body: { transformToString: () => source },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const results = await fullyHydrated.loadFullyHydratedFromReferences(['/h/i/j', '/e/f/g']);
@@ -89,13 +89,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/r/t/u.json',
       })
       .resolves({
-        Body: { toString: () => mockedData },
+        Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: { toString: () => mockedModelData },
+        Body: { transformToString: () => mockedModelData },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/r/t/u', 'max_22');
     const fallbackJson = await fullyHydrated.computeFullyHydrated();
@@ -110,7 +110,7 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/r/t/u.json',
       })
       .resolves({
-        Body: { toString: () => mockedData },
+        Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
@@ -198,22 +198,22 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: { toString: () => mockedData },
+        Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolvesOnce({
-        Body: { toString: () => mockedModelData },
+        Body: { transformToString: () => mockedModelData },
       })
       .resolvesOnce({
-        Body: { toString: () => mockedModelData },
+        Body: { transformToString: () => mockedModelData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/u/v/w.json',
       })
       .resolves({
-        Body: { toString: () => mockedData2 },
+        Body: { transformToString: () => mockedData2 },
       });
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
     const fullyHydratedJson = await fullyHydrated.getFullyHydrated();
@@ -249,13 +249,13 @@ describe('Fully Hydrated Tests', () => {
         Key: 'tenant/preview/a/b/c.json',
       })
       .resolves({
-        Body: { toString: () => mockedData },
+        Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
         Key: 'tenant/preview/_model_/model1.json',
       })
       .resolves({
-        Body: { toString: () => mockedModelData },
+        Body: { transformToString: () => mockedModelData },
       })
       .on(PutObjectCommand)
       .rejects('Put Error');
