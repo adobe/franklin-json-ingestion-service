@@ -81,7 +81,7 @@ export default class Storage {
       return JSON.parse(data.Body.toString('utf-8'));
     } catch (err) {
       throw new Error(
-          `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
+        `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
       );
     }
   }
