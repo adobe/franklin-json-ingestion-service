@@ -71,7 +71,7 @@ export default class Storage {
     }
   }
 
-  async getKey(key, attempt = 3) {
+  async getKey(key) {
     const params = this.buildDefaultParams({
       Key: key,
     });
@@ -80,14 +80,9 @@ export default class Storage {
       const data = await this.s3.send(new GetObjectCommand(params));
       return JSON.parse(data.Body.toString('utf-8'));
     } catch (err) {
-      if (attempt <= 1) {
-        throw new Error(
+      throw new Error(
           `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
-        );
-      } else {
-        this.context.log.warn(`Issue while reading ${key}, retrying...`);
-        return this.getKey(key, attempt - 1);
-      }
+      );
     }
   }
 

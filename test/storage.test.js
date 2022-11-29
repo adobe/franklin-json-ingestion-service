@@ -122,22 +122,7 @@ describe('Storage Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
     assert.strictEqual(result.length, 6);
   });
-  it('getKey call GetObjectCommand 2 times', async () => {
-    const s3Mock = mockClient(S3Client);
-    const source = JSON.stringify({ test: 'data' });
-    const mockedData = Buffer.from(source);
-    s3Mock
-      .on(GetObjectCommand)
-      .rejectsOnce('Error')
-      .resolvesOnce({
-        Body: { toString: () => mockedData },
-      });
-    const key = 'local/preview/a/b/c.json';
-    const result = await new Storage().getKey(key);
-    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 2);
-    assert.strictEqual(JSON.stringify(result), source);
-  });
-  it('getKey fails after 3 attempts', async () => {
+  it('getKey fails if not found', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock
       .on(GetObjectCommand)
@@ -149,7 +134,7 @@ describe('Storage Tests', () => {
         message: `An error occurred while trying to read ${key} in S3 bucket due to Error after several attempts`,
       },
     );
-    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 3);
+    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
   });
   it('evictKeys call DeleteObjectCommand 3 times', async () => {
     const s3Mock = mockClient(S3Client);
