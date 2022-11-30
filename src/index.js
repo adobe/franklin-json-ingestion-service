@@ -74,6 +74,7 @@ async function run(request, context) {
     if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
       return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
     }
+    const { selector } = json;
     const mode = json.mode || 'preview';
     if (!VALID_MODES.includes(mode)) {
       return new Response(`Invalid parameters mode value, accept:${VALID_MODES}`, { status: 400 });
@@ -88,12 +89,13 @@ async function run(request, context) {
     const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
     const s3LiveObjectPath = `${tenant}/live/${relPath}`;
     const { payload } = json;
+    const selection = selector ? `.${selector}`:'';
 
     try {
       if (action === 'store') {
         if (mode === 'live') {
-          const sourceKey = `${s3PreviewObjectPath}.json${suffix}`;
-          const targetKey = `${s3LiveObjectPath}.json${suffix}`;
+          const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
+          const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
           const k = await storage.copyKey(
             sourceKey,
             targetKey,
