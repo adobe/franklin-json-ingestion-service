@@ -14,7 +14,7 @@ import assert from 'assert';
 import { mockClient } from 'aws-sdk-client-mock';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-import FullyHydrated from '../src/fullyhydrated.js';
+import FullyHydrated, { renderFullyHydrated } from '../src/fullyhydrated.js';
 
 const mockedContext = { log: console };
 
@@ -34,6 +34,10 @@ describe('Fully Hydrated Tests', () => {
   it('computeDerivedKey without variation', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', 'var2');
     assert.strictEqual(fullyHydrated.computeDerivedKey(), 'tenant/preview/a/b/c.franklin.json');
+  });
+  it('quickly exit renderFullyHydrated for key in _models_', async () => {
+    const result = await renderFullyHydrated(null, 'tenant/preview/_models_/model.franklin.json', null);
+    assert.strictEqual(result, undefined);
   });
   it('extractModelPath from CF json', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
@@ -92,7 +96,7 @@ describe('Fully Hydrated Tests', () => {
         Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/_model_/model1.json',
+        Key: 'tenant/preview/_model_/model1.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedModelData },
@@ -201,7 +205,7 @@ describe('Fully Hydrated Tests', () => {
         Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/_model_/model1.json',
+        Key: 'tenant/preview/_model_/model1.franklin.json',
       })
       .resolvesOnce({
         Body: { transformToString: () => mockedModelData },
@@ -252,7 +256,7 @@ describe('Fully Hydrated Tests', () => {
         Body: { transformToString: () => mockedData },
       })
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/_model_/model1.json',
+        Key: 'tenant/preview/_model_/model1.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedModelData },

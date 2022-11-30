@@ -109,7 +109,7 @@ export default class FullyHydrated {
       }
     }
     // read model json from storage
-    const modelKey = `${this.extractModelPath(mainJson)}.json`;
+    const modelKey = `${this.extractModelPath(mainJson)}.franklin.json`;
     const modelJson = await this.getModel(modelKey);
     if (!modelJson) {
       this.context.log.warn(`Cannot find model ${modelKey} for ${this.key}`);
@@ -136,6 +136,9 @@ export default class FullyHydrated {
 }
 
 export async function renderFullyHydrated(context, key, variation) {
+  if (key.indexOf('_models_') >= 0) {
+    return;
+  }
   const startTime = Date.now();
   await new FullyHydrated(
     context,
