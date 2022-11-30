@@ -64,6 +64,29 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.json stored');
     assert.strictEqual(await result.status, 200);
   });
+  it('stores in preview with selector parameter', async () => {
+    mockClient(S3Client);
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            selector: 'cfm.gql',
+            payload: {
+              test: 'value',
+            },
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
+    assert.strictEqual(await result.status, 200);
+  });
   it('stores variation', async () => {
     mockClient(S3Client);
     const result = await main(

@@ -89,7 +89,7 @@ async function run(request, context) {
     const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
     const s3LiveObjectPath = `${tenant}/live/${relPath}`;
     const { payload } = json;
-    const selection = selector ? `.${selector}`:'';
+    const selection = selector ? `.${selector}` : '';
 
     try {
       if (action === 'store') {
@@ -101,27 +101,27 @@ async function run(request, context) {
             targetKey,
           );
           context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
-          const cacheKey = `${s3LiveObjectPath}.json${suffix}/cache`;
+          const cacheKey = `${s3LiveObjectPath}${selection}.json${suffix}/cache`;
           await storage.evictKey(cacheKey);
           context.log.info(`evictKey ${cacheKey} success`);
           return new Response(`${k} stored`);
         } else {
           // store to preview
-          const storedKey = `${s3PreviewObjectPath}.json${suffix}`;
+          const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
           const k = await storage.putKey(
             storedKey,
             payload,
             variation,
           );
           context.log.info(`putKey ${storedKey} success`);
-          const cacheKey = `${s3PreviewObjectPath}.json${suffix}/cache`;
+          const cacheKey = `${s3PreviewObjectPath}${selection}.json${suffix}/cache`;
           await storage.evictKey(cacheKey);
           context.log.info(`evictKey ${cacheKey} success`);
           return new Response(`${k} stored`);
         }
       } else {
         const evictKeysPrefix = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-        const ks = await storage.evictKeys(`${evictKeysPrefix}.json`);
+        const ks = await storage.evictKeys(`${evictKeysPrefix}${selection}.json`);
         return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
       }
     } catch (err) {
