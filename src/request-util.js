@@ -12,7 +12,7 @@
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict', 'touch'];
-const VALID_METHODS = ['GET', 'POST'];
+const VALID_METHODS = ['POST'];
 
 export default class RequestUtil {
   constructor(request) {

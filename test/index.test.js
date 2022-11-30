@@ -20,9 +20,9 @@ import { main } from '../src/index.js';
 describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await main(new Request('https://localhost/'), {});
-    assert.strictEqual(await result.status, 400);
+    assert.strictEqual(await result.status, 405);
   });
-  it('only GET or POST allowed', async () => {
+  it('only POST allowed', async () => {
     const result = await main(new Request('https://localhost/', { method: 'PUT' }), {});
     assert.strictEqual(await result.status, 405);
   });

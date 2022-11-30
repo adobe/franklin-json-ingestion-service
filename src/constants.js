@@ -9,8 +9,6 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-export const FULLY_HYDRATED_SUFFIX = '.cfm.gql';
-export const SERVICE_ENDPOINT_NAME = '/get';
 export const PN_MODEL = '_model';
 export const PN_PATH = '_path';
 export const DEFAULT_BUCKET = 'franklin-content-bus-headless';
