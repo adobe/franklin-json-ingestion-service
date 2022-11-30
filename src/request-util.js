@@ -9,33 +9,65 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import { SERVICE_ENDPOINT_NAME, FULLY_HYDRATED_SUFFIX } from './constants.js';
 
-const EXT_JSON = '.json';
+const VALID_MODES = ['preview', 'live'];
+const VALID_ACTIONS = ['store', 'evict', 'touch'];
+const VALID_METHODS = ['GET', 'POST'];
 
 export default class RequestUtil {
   constructor(request) {
-    const indexFullyHydrated = request.url.indexOf(FULLY_HYDRATED_SUFFIX);
-    const isJson = request.url.endsWith(EXT_JSON);
-    if (isJson && indexFullyHydrated > 0) {
-      const path = request.url.substring(0, indexFullyHydrated);
-      this.key = path.substring(
-        path.indexOf(SERVICE_ENDPOINT_NAME) + SERVICE_ENDPOINT_NAME.length + 1,
-      );
-      const suffix = request.url.substring(
-        request.url.indexOf(FULLY_HYDRATED_SUFFIX) + FULLY_HYDRATED_SUFFIX.length,
-      );
-      if (suffix !== EXT_JSON) {
-        this.variation = suffix.substring(1, suffix.length - EXT_JSON.length);
-      }
+    this.request = request;
+    this.isValid = false;
+    this.errorMessage = '';
+    this.errorStatusCode = 400;
+  }
+
+  async validate() {
+    if (!VALID_METHODS.includes(this.request.method)) {
+      this.errorMessage = 'Currently only POST | GET is implemented';
+      this.errorStatusCode = 405;
+      return;
     }
-  }
 
-  getKey() {
-    return this.key;
-  }
+    if (this.request.headers.get('Content-Type') !== 'application/json') {
+      this.errorMessage = 'Invalid request content type please check the API for details';
+      return;
+    }
 
-  getVariation() {
-    return this.variation;
+    try {
+      this.json = await this.request.json();
+    } catch (parseError) {
+      this.errorMessage = `Error while parsing the body as json due to ${parseError.message}`;
+      return;
+    }
+
+    this.tenant = this.json.tenant;
+    if (!this.tenant || !this.tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
+      this.errorMessage = 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]';
+      return;
+    }
+
+    this.relPath = this.json.relPath;
+    if (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0) {
+      this.errorMessage = 'Invalid parameters relPath value, accept: a/b/c....';
+      return;
+    }
+
+    this.selector = this.json.selector;
+    this.mode = this.json.mode || 'preview';
+
+    if (!VALID_MODES.includes(this.mode)) {
+      this.errorMessage = `Invalid parameters mode value, accept:${VALID_MODES}`;
+      return;
+    }
+
+    this.action = this.json.action || 'store';
+    if (!VALID_ACTIONS.includes(this.action)) {
+      this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
+      return;
+    }
+    this.variation = this.json.variation;
+    this.payload = this.json.payload;
+    this.isValid = true;
   }
 }

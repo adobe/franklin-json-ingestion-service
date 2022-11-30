@@ -11,24 +11,181 @@
  */
 
 /* eslint-env mocha */
+
+import { Request } from '@adobe/fetch';
 import assert from 'assert';
 import RequestUtil from '../src/request-util.js';
-import { SERVICE_ENDPOINT_NAME } from '../src/constants.js';
 
 describe('RequestUtil Tests', () => {
-  it('undefined key and variation if not expected url format', async () => {
-    const result = new RequestUtil({ url: '' });
-    assert.strictEqual(result.getKey(), undefined);
-    assert.strictEqual(result.getVariation(), undefined);
+  it('fails on invalid content-type', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'text/html' },
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid request content type please check the API for details');
   });
-  it('valid key and empty variation if variation is not set in the url format', async () => {
-    const result = new RequestUtil({ url: `${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json` });
-    assert.strictEqual(result.getKey(), 'a/b/c');
-    assert.strictEqual(result.getVariation(), undefined);
+  it('fails on missing tenant', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{}',
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]');
   });
-  it('valid key and variation if variation is set in the url format', async () => {
-    const result = new RequestUtil({ url: `${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.max_22.json` });
-    assert.strictEqual(result.getKey(), 'a/b/c');
-    assert.strictEqual(result.getVariation(), 'max_22');
+  it('fails on missing relPath', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid relPath type', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 10,
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid relPath value', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: '/a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+  });
+  it('fails on invalid mode value', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            mode: 'any',
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters mode value, accept:preview,live');
+  });
+  it('fails on invalid action value', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            mode: 'preview',
+            action: 'any',
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters action value, accept:store,evict,touch');
+  });
+  it('fails on invalid tenant value', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'some+id',
+          }),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]');
+  });
+  it('fails on invalid json payload', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{ test: invalid, }',
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 400);
+    assert.strictEqual(reqUtil.errorMessage, 'Error while parsing the body as json due to Unexpected token t in JSON at position 2');
   });
 });
