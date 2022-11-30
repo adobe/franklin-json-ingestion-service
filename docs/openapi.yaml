@@ -1,0 +1,106 @@
+openapi: 3.0.3
+info:
+  title: Franklin JSON Ingestor Service API
+  description: |
+    APIs to ingest json and store it in S3.
+
+  version: 0.0.1
+tags:
+  - name: Franklin
+    description: Franklin json Ingestor Service APIs
+security:
+  - Bearer: [ ]
+  - ApiKey: [ ]
+  - Organization: [ ]
+servers:
+  - url: https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci120
+paths:
+  /:
+    post:
+      tags:
+        - Franklin
+      summary: Store | Evict | Touch json .
+      description: |
+        This api allow to store | evict | touch a resource stored in S3 bucket.
+      requestBody:
+        $ref: '#/components/requestBodies/RequestJSONIngestor'
+      responses:
+        '200':
+          $ref: '#/components/responses/ValidParameters'
+        '400':
+          $ref: '#/components/responses/InvalidParameters'
+components:
+  requestBodies:
+    RequestJSONIngestor:
+      description: The request payload for the franklin json ingestor api.
+      content:
+        application/json:
+          schema:
+            properties:
+              action:
+                type: string
+                description: The command key to store | evict | touch the given relPath under specific tenant and mode.
+                example: store
+                enum:
+                  - store
+                  - evict
+                  - touch
+              tenant:
+                type: string
+                description: Define where it get stored under S3 main folder. i.e <tenant>
+                example: sample
+              mode:
+                type: string
+                description: Define where it get stored under tenant main folder.
+                example: live
+                enum:
+                  - live
+                  - preview
+              relPath:
+                type: string
+                description: |
+                  Define the relative path under the tenant / mode folder.
+                example: a/b/c
+              payload:
+                type: string
+                description: Optional (only for store operation), Json string representation to be stored as json file.
+                example:
+                  test: some content
+              variation:
+                type: string
+                description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.<selector>.json/variations/<variation>
+                example: var1
+              selector:
+                type: string
+                description: Optional, the selector information used to store the json i.e <tenant>/<mode><relPath>.<selector>.json
+                example: cfm.gql
+            example:
+              action: store
+              tenant: sample
+              mode: preview
+              relPath: a/b/c
+              payload:
+                test: "some object value"
+            required:
+              - action
+              - tenant
+              - mode
+              - relPath
+
+  responses:
+    ValidParameters:
+      description: |
+        The server respond with action result message.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: sample/preview/a/b/c.json stored
+    InvalidParameters:
+      description: |
+        The server failed on validating the parameters.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Invalid parameters payload value, accept:{...} object
