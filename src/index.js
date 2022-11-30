@@ -13,14 +13,9 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
-import { promisify } from 'util';
-import zlib from 'zlib';
 import Storage from './storage.js';
-import FullyHydrated from './fullyhydrated.js';
-import RequestUtil from './request-util.js';
-import { FULLY_HYDRATED_SUFFIX } from './constants.js';
+import { renderFullyHydrated } from './fullyhydrated.js';
 
-const gzip = promisify(zlib.gzip);
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict'];
 const VALID_METHODS = ['GET', 'POST'];
@@ -34,27 +29,6 @@ const VALID_METHODS = ['GET', 'POST'];
 async function run(request, context) {
   if (!VALID_METHODS.includes(request.method)) {
     return new Response('Currently only POST | GET is implemented', { status: 405 });
-  } else if (request.method === 'GET') {
-    if (request.url.indexOf(FULLY_HYDRATED_SUFFIX) < 0) {
-      return new Response('Invalid request', { status: 400 });
-    } else {
-      const requestUtil = new RequestUtil(request);
-      const startTime = Date.now();
-      const json = await new FullyHydrated(
-        context,
-        requestUtil.getKey(),
-        requestUtil.getVariation(),
-      ).getFullyHydrated();
-      const endTime = Date.now();
-      const deltaTime = endTime - startTime;
-      context.log.info(`getFullyHydrated took ${deltaTime} ms`);
-      if (json) {
-        const jsonGzip = await gzip(JSON.stringify(json));
-        return new Response(jsonGzip, { headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' } });
-      } else {
-        return new Response('Resource Not Found', { status: 404 });
-      }
-    }
   } else if (request.headers.get('Content-Type') !== 'application/json') {
     return new Response('Invalid request content type please check the API for details', { status: 400 });
   } else {
@@ -101,9 +75,10 @@ async function run(request, context) {
             targetKey,
           );
           context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
-          const cacheKey = `${s3LiveObjectPath}${selection}.json${suffix}/cache`;
-          await storage.evictKey(cacheKey);
-          context.log.info(`evictKey ${cacheKey} success`);
+          if (selector === 'franklin') {
+            // generate the fully hydrated right after
+            await renderFullyHydrated(context, s3LiveObjectPath, variation);
+          }
           return new Response(`${k} stored`);
         } else {
           // store to preview
@@ -114,9 +89,10 @@ async function run(request, context) {
             variation,
           );
           context.log.info(`putKey ${storedKey} success`);
-          const cacheKey = `${s3PreviewObjectPath}${selection}.json${suffix}/cache`;
-          await storage.evictKey(cacheKey);
-          context.log.info(`evictKey ${cacheKey} success`);
+          if (selector === 'franklin') {
+            // generate the fully hydrated right after
+            await renderFullyHydrated(context, s3PreviewObjectPath, variation);
+          }
           return new Response(`${k} stored`);
         }
       } else {

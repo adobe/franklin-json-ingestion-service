@@ -21,19 +21,19 @@ const mockedContext = { log: console };
 describe('Fully Hydrated Tests', () => {
   it('computeCacheKey with variation', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', 'var1');
-    assert.strictEqual(fullyHydrated.cacheKey, 'tenant/preview/a/b/c.json/variations/var1/cache');
+    assert.strictEqual(fullyHydrated.cacheKey, 'tenant/preview/a/b/c.franklin.json/variations/var1/fully');
   });
   it('computeCacheKey without variation', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
-    assert.strictEqual(fullyHydrated.cacheKey, 'tenant/preview/a/b/c.json/cache');
+    assert.strictEqual(fullyHydrated.cacheKey, 'tenant/preview/a/b/c.franklin.json/fully');
   });
   it('computeDerivedKey with variation', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', 'var2');
-    assert.strictEqual(fullyHydrated.computeDerivedKey('var1'), 'tenant/preview/a/b/c.json/variations/var1');
+    assert.strictEqual(fullyHydrated.computeDerivedKey('var1'), 'tenant/preview/a/b/c.franklin.json/variations/var1');
   });
   it('computeDerivedKey without variation', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', 'var2');
-    assert.strictEqual(fullyHydrated.computeDerivedKey(), 'tenant/preview/a/b/c.json');
+    assert.strictEqual(fullyHydrated.computeDerivedKey(), 'tenant/preview/a/b/c.franklin.json');
   });
   it('extractModelPath from CF json', () => {
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
@@ -49,13 +49,13 @@ describe('Fully Hydrated Tests', () => {
     const source = JSON.stringify({ test: 'data' });
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/h/i/j.json/cache',
+        Key: 'tenant/preview/h/i/j.franklin.json/fully',
       })
       .resolves({
         Body: { transformToString: () => source },
       })
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/e/f/g.json/cache',
+        Key: 'tenant/preview/e/f/g.franklin.json/fully',
       })
       .resolves({
         Body: { transformToString: () => source },
@@ -82,11 +82,11 @@ describe('Fully Hydrated Tests', () => {
     const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/r/t/u.json/variations/max_22',
+        Key: 'tenant/preview/r/t/u.franklin.json/variations/max_22',
       })
       .rejects('Not found')
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/r/t/u.json',
+        Key: 'tenant/preview/r/t/u.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedData },
@@ -107,7 +107,7 @@ describe('Fully Hydrated Tests', () => {
     const mockedData = JSON.stringify(source);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/r/t/u.json',
+        Key: 'tenant/preview/r/t/u.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedData },
@@ -133,11 +133,11 @@ describe('Fully Hydrated Tests', () => {
     const s3Mock = mockClient(S3Client);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json/cache',
+        Key: 'tenant/preview/a/b/c.franklin.json/fully',
       })
       .rejects('Not found')
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json',
+        Key: 'tenant/preview/a/b/c.franklin.json',
       })
       .rejects('Not found');
     const fullyHydrated = new FullyHydrated(mockedContext, 'tenant/preview/a/b/c', '');
@@ -150,11 +150,11 @@ describe('Fully Hydrated Tests', () => {
     const mockedData = JSON.stringify(source);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json/cache',
+        Key: 'tenant/preview/a/b/c.franklin.json/cache',
       })
       .rejects('Not found')
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json',
+        Key: 'tenant/preview/a/b/c.franklin.json',
       })
       .resolves({
         Body: {
@@ -191,11 +191,11 @@ describe('Fully Hydrated Tests', () => {
     const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json/cache',
+        Key: 'tenant/preview/a/b/c.franklin.json/cache',
       })
       .rejects('Not found')
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json',
+        Key: 'tenant/preview/a/b/c.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedData },
@@ -210,7 +210,7 @@ describe('Fully Hydrated Tests', () => {
         Body: { transformToString: () => mockedModelData },
       })
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/u/v/w.json',
+        Key: 'tenant/preview/u/v/w.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedData2 },
@@ -242,11 +242,11 @@ describe('Fully Hydrated Tests', () => {
     const mockedModelData = JSON.stringify(modelSource);
     s3Mock
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json/cache',
+        Key: 'tenant/preview/a/b/c.franklin.json/cache',
       })
       .rejects('Not found')
       .on(GetObjectCommand, {
-        Key: 'tenant/preview/a/b/c.json',
+        Key: 'tenant/preview/a/b/c.franklin.json',
       })
       .resolves({
         Body: { transformToString: () => mockedData },

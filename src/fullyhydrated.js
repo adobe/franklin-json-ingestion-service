@@ -38,7 +38,7 @@ export default class FullyHydrated {
   }
 
   computeCacheKey() {
-    return `${this.computeDerivedKey(this.variation)}/cache`;
+    return `${this.computeDerivedKey(this.variation)}/fully`;
   }
 
   async getCachedJson() {
@@ -55,12 +55,14 @@ export default class FullyHydrated {
      * This is the main function
      * @return {Object} parsed json object or undefined if not found.
      */
-  async getFullyHydrated() {
+  async getFullyHydrated(force) {
     this.context.log.info(`getFullyHydrated key=${this.key} variation=${this.variation}`);
-    const cachedJson = await this.getCachedJson();
-    if (cachedJson) {
-      this.context.log.info(`${this.key} returned from cache`);
-      return cachedJson;
+    if (!force) {
+      const cachedJson = await this.getCachedJson();
+      if (cachedJson) {
+        this.context.log.info(`${this.key} returned from cache`);
+        return cachedJson;
+      }
     }
     const mainJson = await this.computeFullyHydrated();
     if (mainJson) {
@@ -75,7 +77,7 @@ export default class FullyHydrated {
   }
 
   computeDerivedKey(variation) {
-    return variation ? `${this.key}.json/variations/${variation}` : `${this.key}.json`;
+    return variation ? `${this.key}.franklin.json/variations/${variation}` : `${this.key}.franklin.json`;
   }
 
   extractModelPath(jsonObj) {
@@ -131,4 +133,16 @@ export default class FullyHydrated {
       return result;
     });
   }
+}
+
+export async function renderFullyHydrated(context, key, variation) {
+  const startTime = Date.now();
+  await new FullyHydrated(
+    context,
+    key,
+    variation,
+  ).getFullyHydrated(true);
+  const endTime = Date.now();
+  const deltaTime = endTime - startTime;
+  context.log.info(`getFullyHydrated for ${key} took ${deltaTime} ms`);
 }

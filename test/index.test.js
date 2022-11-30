@@ -13,10 +13,9 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { Request } from '@adobe/fetch';
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { main } from '../src/index.js';
-import { SERVICE_ENDPOINT_NAME } from '../src/constants.js';
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
@@ -26,21 +25,6 @@ describe('Index Tests', () => {
   it('only GET or POST allowed', async () => {
     const result = await main(new Request('https://localhost/', { method: 'PUT' }), {});
     assert.strictEqual(await result.status, 405);
-  });
-  it('return 404 on valid GET request and resource is not found', async () => {
-    const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});
-    assert.strictEqual(await result.status, 404);
-  });
-  it('return 200 on valid GET request and resource found', async () => {
-    const s3Mock = mockClient(S3Client);
-    const source = JSON.stringify({ _path: '/a/b/c', _model: '/_model_/model1' });
-    s3Mock.on(GetObjectCommand)
-      .resolvesOnce({
-        Body: { transformToString: () => source },
-      });
-
-    const result = await main(new Request(`https://localhost/${SERVICE_ENDPOINT_NAME}/a/b/c.cfm.gql.json`), {});
-    assert.strictEqual(await result.status, 200);
   });
   it('stores in preview as implicit operation', async () => {
     mockClient(S3Client);
@@ -85,6 +69,29 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
+    assert.strictEqual(await result.status, 200);
+  });
+  it('stores in preview with franklin selector parameter', async () => {
+    mockClient(S3Client);
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+            selector: 'franklin',
+            payload: {
+              test: 'value',
+            },
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.franklin.json stored');
     assert.strictEqual(await result.status, 200);
   });
   it('stores variation', async () => {
@@ -283,6 +290,28 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json stored');
+    assert.strictEqual(await result.status, 200);
+  });
+  it('stores in live with franklin selector success', async () => {
+    mockClient(S3Client);
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            action: 'store',
+            mode: 'live',
+            selector: 'franklin',
+            tenant: 'local',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'local/live/a/b/c.franklin.json stored');
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in preview success', async () => {
