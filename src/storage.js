@@ -119,7 +119,7 @@ export default class Storage {
           Objects: cloneObject(deletedKeys),
         },
       })));
-      this.context.log.info('evictKeys successful');
+      this.context.log.info(`evictKeys ${deletedKeys.map((i) => i.Key).join(',')} successful`);
       return deletedKeys;
     } catch (err) {
       this.context.log.error(`evictKeys failed ${err.message}`);
