@@ -14,9 +14,8 @@ import { logger } from '@adobe/helix-universal-logger';
 import { wrap as status } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
-
-const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict'];
+import { renderFullyHydrated } from './fullyhydrated.js';
+import RequestUtil from './request-util.js';
 
 /**
  * This is the main function
@@ -25,67 +24,67 @@ const VALID_ACTIONS = ['store', 'evict'];
  * @returns {Response} a response
  */
 async function run(request, context) {
-  if (request.method !== 'POST') {
-    return new Response('Currently only POST is implemented', { status: 405 });
-  } else if (request.headers.get('Content-Type') !== 'application/json') {
-    return new Response('Invalid request content type please check the API for details', { status: 400 });
-  } else {
-    let json;
+  const requestUtil = new RequestUtil(request);
+  await requestUtil.validate();
 
-    try {
-      json = await request.json();
-    } catch (parseError) {
-      return new Response(`Error while parsing the body as json due to ${parseError.message}`, { status: 400 });
-    }
+  if (!requestUtil.isValid) {
+    return new Response(requestUtil.errorMessage, { status: requestUtil.errorStatusCode });
+  }
 
-    context.log.info(`body: ${JSON.stringify(json)}`);
-    const { tenant } = json;
-    if (!tenant || !tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
-      return new Response('Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]', { status: 400 });
-    }
-    const { relPath } = json;
-    if (!relPath || typeof relPath !== 'string' || relPath.indexOf('/') === 0) {
-      return new Response('Invalid parameters relPath value, accept: a/b/c....', { status: 400 });
-    }
-    const mode = json.mode || 'preview';
-    if (!VALID_MODES.includes(mode)) {
-      return new Response(`Invalid parameters mode value, accept:${VALID_MODES}`, { status: 400 });
-    }
-    const action = json.action || 'store';
-    if (!VALID_ACTIONS.includes(action)) {
-      return new Response(`Invalid parameters action value, accept:${VALID_ACTIONS}`, { status: 400 });
-    }
-    const { variation } = json;
-    const suffix = variation ? `.${variation}` : '';
-    const storage = new Storage();
-    const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
-    const s3LiveObjectPath = `${tenant}/live/${relPath}`;
-    const { payload } = json;
+  const {
+    action, mode, selector, tenant, relPath, payload, variation,
+  } = requestUtil;
 
-    try {
-      if (action === 'store') {
-        if (mode === 'live') {
-          const k = await storage.copyKey(
-            `${s3PreviewObjectPath}${suffix}.json`,
-            `${s3LiveObjectPath}${suffix}.json`,
-          );
-          return new Response(`${k} stored`);
-        } else {
-          // store to preview
-          const k = await storage.putKey(
-            `${s3PreviewObjectPath}${suffix}.json`,
-            payload,
-            variation,
-          );
-          return new Response(`${k} stored`);
+  const storage = new Storage(context);
+  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
+  const selection = selector ? `.${selector}` : '';
+  const suffix = variation ? `/variations/${variation}` : '';
+
+  try {
+    if (action === 'store') {
+      if (mode === 'live') {
+        const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
+        const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
+        const k = await storage.copyKey(
+          sourceKey,
+          targetKey,
+        );
+        context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
+        if (selector === 'franklin') {
+          // generate the fully hydrated right after
+          await renderFullyHydrated(context, s3LiveObjectPath, variation);
         }
+        return new Response(`${k} stored`);
       } else {
-        const ks = await storage.evictKeys(mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath);
-        return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
+        // store to preview
+        const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
+        const k = await storage.putKey(
+          storedKey,
+          payload,
+          variation,
+        );
+        context.log.info(`putKey ${storedKey} success`);
+        if (selector === 'franklin') {
+          // generate the fully hydrated right after
+          await renderFullyHydrated(context, s3PreviewObjectPath, variation);
+        }
+        return new Response(`${k} stored`);
       }
-    } catch (err) {
-      return new Response(`${err.message}`, { status: 500 });
+    } else if (action === 'touch') {
+      const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+      if (selector === 'franklin') {
+        // generate the fully hydrated right after
+        await renderFullyHydrated(context, baseKey, variation);
+      }
+      return new Response(`${baseKey} touched`);
+    } else {
+      const evictKeysPrefix = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+      const ks = await storage.evictKeys(`${evictKeysPrefix}${selection}.json`);
+      return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
     }
+  } catch (err) {
+    return new Response(`${err.message}`, { status: 500 });
   }
 }
 
