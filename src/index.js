@@ -73,12 +73,11 @@ async function run(request, context) {
       }
     } else if (action === 'touch') {
       const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-      const touchKey = `${baseKey}${selection}.json${suffix}`;
       if (selector === 'franklin') {
         // generate the fully hydrated right after
-        await renderFullyHydrated(context, touchKey, variation);
+        await renderFullyHydrated(context, baseKey, variation);
       }
-      return new Response(`${touchKey} touched`);
+      return new Response(`${baseKey} touched`);
     } else {
       const evictKeysPrefix = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
       const ks = await storage.evictKeys(`${evictKeysPrefix}${selection}.json`);

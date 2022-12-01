@@ -180,7 +180,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c.franklin.json touched');
+    assert.strictEqual(await result.text(), 'local/live/a/b/c touched');
     assert.strictEqual(await result.status, 200);
   });
   it('touch in preview with franklin selector success', async () => {
@@ -202,7 +202,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.franklin.json touched');
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c touched');
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in preview success', async () => {
