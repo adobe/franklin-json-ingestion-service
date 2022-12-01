@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.3.1...v1.4.0) (2022-12-01)
+
+
+### Features
+
+* Improve code and implement fully hydrated computation on store|touch action ([#13](https://github.com/adobe/franklin-json-ingestion-service/issues/13)) ([d661671](https://github.com/adobe/franklin-json-ingestion-service/commit/d66167130af7833f3db799cb4cddf8387998bef4))
+
 ## [1.3.1](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.3.0...v1.3.1) (2022-11-27)
 
 
