@@ -11,12 +11,10 @@
  */
 import {
   CopyObjectCommand, GetObjectCommand,
-  DeleteObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
-  S3Client,
+  S3Client, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
-import processQueue from '@adobe/helix-shared-process-queue';
 import { cloneObject } from './utils.js';
 import { DEFAULT_BUCKET } from './constants.js';
 
@@ -37,14 +35,6 @@ export default class Storage {
       Bucket: this.bucket,
       ...options,
     };
-  }
-
-  async deleteKey(key) {
-    const params = this.buildDefaultParams({
-      Key: key,
-    });
-    await this.s3.send(new DeleteObjectCommand(params));
-    return key;
   }
 
   async putKey(key, payload, variation) {
@@ -124,25 +114,16 @@ export default class Storage {
       const listObject = await this.listKeys(`${prefix}/`);
       const deletedKeys = [{ Key: prefix }];
       listObject.forEach((o) => deletedKeys.push({ Key: o.Key }));
-      await processQueue(cloneObject(deletedKeys), async (key) => this.evictKey(key));
+      await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
+        Delete: {
+          Objects: cloneObject(deletedKeys),
+        },
+      })));
       this.context.log.info('evictKeys successful');
       return deletedKeys;
     } catch (err) {
       this.context.log.error(`evictKeys failed ${err.message}`);
       throw new Error(`An error occurred while trying to evict key(s) in S3 bucket due to ${err.message}`);
-    }
-  }
-
-  async evictKey(key) {
-    try {
-      await this.s3.send(new DeleteObjectCommand(this.buildDefaultParams({
-        Key: key,
-      })));
-      this.context.log.info('evictKey successful');
-      return key;
-    } catch (err) {
-      this.context.log.error(`evictKey failed ${err.message}`);
-      throw new Error(`An error occurred while trying to evict key in S3 bucket due to ${err.message}`);
     }
   }
 }

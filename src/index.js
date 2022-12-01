@@ -32,59 +32,62 @@ async function run(request, context) {
   }
 
   const {
-    action, mode, selector, tenant, relPath, payload, variation,
+    action, mode, selector, tenant, relPath, payload, variation, folderMode,
   } = requestUtil;
 
   const storage = new Storage(context);
-  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
-  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
+  const s3PreviewObjectPath = relPath ? `${tenant}/preview/${relPath}` : `${tenant}/preview`;
+  const s3LiveObjectPath = relPath ? `${tenant}/live/${relPath}` : `${tenant}/live`;
   const selection = selector ? `.${selector}` : '';
   const suffix = variation ? `/variations/${variation}` : '';
 
-  try {
-    if (action === 'store') {
-      if (mode === 'live') {
-        const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-        const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
-        const k = await storage.copyKey(
-          sourceKey,
-          targetKey,
-        );
-        context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
-        if (selector === 'franklin') {
-          // generate the fully hydrated right after
-          await renderFullyHydrated(context, s3LiveObjectPath, variation);
-        }
-        return new Response(`${k} stored`);
-      } else {
-        // store to preview
-        const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-        const k = await storage.putKey(
-          storedKey,
-          payload,
-          variation,
-        );
-        context.log.info(`putKey ${storedKey} success`);
-        if (selector === 'franklin') {
-          // generate the fully hydrated right after
-          await renderFullyHydrated(context, s3PreviewObjectPath, variation);
-        }
-        return new Response(`${k} stored`);
-      }
-    } else if (action === 'touch') {
-      const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+  if (action === 'store') {
+    if (mode === 'live') {
+      const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
+      const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
+      const k = await storage.copyKey(
+        sourceKey,
+        targetKey,
+      );
+      context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
       if (selector === 'franklin') {
         // generate the fully hydrated right after
-        await renderFullyHydrated(context, baseKey, variation);
+        await renderFullyHydrated(context, s3LiveObjectPath, variation);
       }
-      return new Response(`${baseKey} touched`);
+      return new Response(`${k} stored`);
     } else {
-      const evictKeysPrefix = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-      const ks = await storage.evictKeys(`${evictKeysPrefix}${selection}.json`);
-      return new Response(`${ks.map((i) => i.Key).join(',')} evicted`);
+      // store to preview
+      const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
+      const k = await storage.putKey(
+        storedKey,
+        payload,
+        variation,
+      );
+      context.log.info(`putKey ${storedKey} success`);
+      if (selector === 'franklin') {
+        // generate the fully hydrated right after
+        await renderFullyHydrated(context, s3PreviewObjectPath, variation);
+      }
+      return new Response(`${k} stored`);
     }
-  } catch (err) {
-    return new Response(`${err.message}`, { status: 500 });
+  } else if (action === 'touch') {
+    const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+    if (selector === 'franklin') {
+      // generate the fully hydrated right after
+      await renderFullyHydrated(context, baseKey, variation);
+    }
+    return new Response(`${baseKey} touched`);
+  } else {
+    const removePreview = mode === 'preview';
+    const removeLive = mode === 'live' || mode === 'preview';
+    const evictedKeys = [];
+    if (removeLive) {
+      evictedKeys.push(...await storage.evictKeys(folderMode ? s3LiveObjectPath : `${s3LiveObjectPath}${selection}.json`));
+    }
+    if (removePreview) {
+      evictedKeys.push(...await storage.evictKeys(folderMode ? s3PreviewObjectPath : `${s3PreviewObjectPath}${selection}.json`));
+    }
+    return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }
 }
 

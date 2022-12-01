@@ -47,9 +47,12 @@ export default class RequestUtil {
       return;
     }
 
+    // For evict action to allow complete folder deletions
+    this.folderMode = this.json.folderMode || false;
+
     this.relPath = this.json.relPath;
-    if (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0) {
-      this.errorMessage = 'Invalid parameters relPath value, accept: a/b/c....';
+    if (!this.folderMode && (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0)) {
+      this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;
     }
 

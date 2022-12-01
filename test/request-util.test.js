@@ -67,7 +67,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, should not start with /');
   });
   it('fails on invalid relPath type', async () => {
     const reqUtil = new RequestUtil(
@@ -87,7 +87,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, should not start with /');
   });
   it('fails on invalid relPath value', async () => {
     const reqUtil = new RequestUtil(
@@ -107,7 +107,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, accept: a/b/c....');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters relPath value, should not start with /');
   });
   it('fails on invalid mode value', async () => {
     const reqUtil = new RequestUtil(
