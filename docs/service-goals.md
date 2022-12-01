@@ -5,7 +5,7 @@ The **Franklin JSON Ingestor Service** goal is to store json representation of s
 # Source of content
 
 By definition this service ingest some JSON from some provider (in our case AEM author).
-In this case it will receive an JSON export from a given Content Fragment or Content Fragment Model eventually.
+In this case it will receive a JSON export from a given Content Fragment or Content Fragment Model eventually.
 
 - **cfm.gql**: an export from Odin AEM author environment json from existing Content Fragment source. **fully hydrated**
   - **example**: /content/dam/ccsurfaces/AppCatalog/en_US/a/b/c.cfm.gql.json 
@@ -15,7 +15,7 @@ In this case it will receive an JSON export from a given Content Fragment or Con
 # Interface / API
 
 The interface for this service is described with the [OpenAPI](swagger.html)
-It mainly support 3 type of actions:
+It mainly supports 3 types of action:
 - **store**: to store a given JSON in a specific location of the storage.
 - **evict**: to remove a given JSON at a specific location of the storage.
 - **touch**: to tell the service to re-compute the fully hydrated JSON and store it (specific to "franklin" source).
