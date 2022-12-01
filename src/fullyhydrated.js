@@ -103,7 +103,7 @@ export default class FullyHydrated {
       // fallback on main variation
       if (this.variation) {
         this.context.log.info(`Using fallback mechanism to get the key ${this.key}`);
-        mainJson = await this.storage.getKey(`${this.computeDerivedKey()}`);
+        mainJson = await this.storage.getKey(this.computeDerivedKey());
       } else {
         return null;
       }
