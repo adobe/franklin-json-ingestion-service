@@ -131,13 +131,18 @@ describe('Storage Tests', () => {
   });
   it('evictKeys call DeleteObjectsCommand 1 times', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).resolves({
-      IsTruncated: false,
-      Contents: [
-        { Key: 'local/preview/a/b/c.json/variations/v1' },
-        { Key: 'local/preview/a/b/c.json/variations/v2' },
-      ],
-    });
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/preview/a/b/c.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.json/variations/v2' },
+        ],
+      });
     const keyPrefix = 'local/preview/a/b/c.';
     const result = await new Storage().evictKeys(keyPrefix);
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);

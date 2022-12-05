@@ -74,10 +74,6 @@ components:
                 type: string
                 description: Optional, the selector information used to store the json i.e <tenant>/<mode><relPath>.<selector>.json
                 example: cfm.gql
-              folderMode:
-                type: boolean
-                description: Optional, for evict action to allow a complete folder
-                example: true
             example:
               action: store
               tenant: sample

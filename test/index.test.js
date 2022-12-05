@@ -210,11 +210,20 @@ describe('Index Tests', () => {
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
         IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
         Contents: [
           { Key: 'local/live/a/b/c.json/variations/v1' },
           { Key: 'local/live/a/b/c.json/variations/v2' },
         ],
-      }).resolvesOnce({
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
         IsTruncated: false,
         Contents: [
           { Key: 'local/preview/a/b/c.json/variations/v1' },
@@ -238,7 +247,7 @@ describe('Index Tests', () => {
       {},
     );
     assert.match(await result.text(), /.*live.* evicted/);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 1);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
     assert.strictEqual(await result.status, 200);
   });
@@ -247,11 +256,20 @@ describe('Index Tests', () => {
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
         IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
         Contents: [
           { Key: 'local/live/a/b/c.json/variations/v1' },
           { Key: 'local/live/a/b/c.json/variations/v2' },
         ],
-      }).resolvesOnce({
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
         IsTruncated: false,
         Contents: [
           { Key: 'local/preview/a/b/c.json/variations/v1' },
@@ -275,19 +293,24 @@ describe('Index Tests', () => {
       {},
     );
     assert.match(await result.text(), /.*live.*preview.* evicted/);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in live success', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).resolvesOnce({
-      IsTruncated: false,
-      Contents: [
-        { Key: 'local/live/a/b/c.json/variations/v1' },
-        { Key: 'local/live/a/b/c.json/variations/v2' },
-      ],
-    });
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/live/a/b/c.json/variations/v1' },
+          { Key: 'local/live/a/b/c.json/variations/v2' },
+        ],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -307,22 +330,32 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.json/variations/v1,local/live/a/b/c.json/variations/v2 evicted');
     assert.strictEqual(await result.status, 200);
   });
-  it('evicts folder in preview implicitely also in live', async () => {
+  it('evicts folder in preview implicitly also in live', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
+          { Key: 'local/live/a/b/c.json' },
           { Key: 'local/live/a/b/c.json/variations/v1' },
           { Key: 'local/live/a/b/c.json/variations/v2' },
         ],
       })
       .resolvesOnce({
         IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
         Contents: [
+          { Key: 'local/preview/a/b/c.json' },
           { Key: 'local/preview/a/b/c.json/variations/v1' },
           { Key: 'local/preview/a/b/c.json/variations/v2' },
         ],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
       });
     const result = await main(
       new Request(
@@ -334,7 +367,7 @@ describe('Index Tests', () => {
             mode: 'preview',
             action: 'evict',
             tenant: 'local',
-            folderMode: true,
+            relPath: 'a/b',
           }),
         },
       ),
@@ -342,7 +375,7 @@ describe('Index Tests', () => {
     );
     assert.strictEqual(await result.status, 200);
     assert.match(await result.text(), /.*live.*preview.* evicted/);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
   });
 });

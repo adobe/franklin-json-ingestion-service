@@ -109,11 +109,14 @@ export default class Storage {
     return objects;
   }
 
-  async evictKeys(prefix) {
+  async evictKeys(key, suffix) {
     try {
-      const listObject = await this.listKeys(`${prefix}/`);
-      const deletedKeys = [{ Key: prefix }];
-      listObject.forEach((o) => deletedKeys.push({ Key: o.Key }));
+      const keyWithSuffix = `${key}${suffix}`;
+      const deletedKeys = [{ Key: keyWithSuffix }];
+      const list1 = await this.listKeys(`${key}/`);
+      list1.forEach((o) => deletedKeys.push({ Key: o.Key }));
+      const list2 = await this.listKeys(`${keyWithSuffix}/`);
+      list2.forEach((o) => deletedKeys.push({ Key: o.Key }));
       await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
         Delete: {
           Objects: cloneObject(deletedKeys),

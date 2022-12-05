@@ -32,12 +32,12 @@ async function run(request, context) {
   }
 
   const {
-    action, mode, selector, tenant, relPath, payload, variation, folderMode,
+    action, mode, selector, tenant, relPath, payload, variation,
   } = requestUtil;
 
   const storage = new Storage(context);
-  const s3PreviewObjectPath = relPath ? `${tenant}/preview/${relPath}` : `${tenant}/preview`;
-  const s3LiveObjectPath = relPath ? `${tenant}/live/${relPath}` : `${tenant}/live`;
+  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   const selection = selector ? `.${selector}` : '';
   const suffix = variation ? `/variations/${variation}` : '';
 
@@ -82,10 +82,10 @@ async function run(request, context) {
     const removeLive = mode === 'live' || mode === 'preview';
     const evictedKeys = [];
     if (removeLive) {
-      evictedKeys.push(...await storage.evictKeys(folderMode ? s3LiveObjectPath : `${s3LiveObjectPath}${selection}.json`));
+      evictedKeys.push(...await storage.evictKeys(s3LiveObjectPath, `${selection}.json`));
     }
     if (removePreview) {
-      evictedKeys.push(...await storage.evictKeys(folderMode ? s3PreviewObjectPath : `${s3PreviewObjectPath}${selection}.json`));
+      evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
     }
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }
