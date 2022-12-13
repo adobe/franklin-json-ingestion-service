@@ -158,10 +158,8 @@ describe('Utils Tests', () => {
     const expected = {
       field1: [
         { test: 1 },
-        '/e/f/g',
         { test: 3 },
       ],
-      field2: '/e/f/g',
       field3: '/e/f/g',
     };
     assert.deepEqual(targetObject, expected);

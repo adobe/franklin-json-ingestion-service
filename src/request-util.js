@@ -49,10 +49,9 @@ export default class RequestUtil {
 
     this.relPath = this.json.relPath;
     if (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0) {
-      this.errorMessage = 'Invalid parameters relPath value, accept: a/b/c....';
+      this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;
     }
-
     this.selector = this.json.selector;
     this.mode = this.json.mode || 'preview';
 

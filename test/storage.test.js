@@ -12,8 +12,8 @@
 
 /* eslint-env mocha */
 import {
-  S3Client, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand,
-  ListObjectsV2Command, GetObjectCommand,
+  S3Client, PutObjectCommand, CopyObjectCommand,
+  ListObjectsV2Command, GetObjectCommand, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
@@ -51,13 +51,6 @@ describe('Storage Tests', () => {
         message: 'An error occurred while trying to store local/preview/a/b/c.json in S3 bucket due to Invalid Operation',
       },
     );
-  });
-  it('deleteKey call DeleteObjectCommand one time', async () => {
-    const s3Mock = mockClient(S3Client);
-    const key = 'local/preview/a/b/c.json';
-    const result = await new Storage().deleteKey(key);
-    assert.strictEqual(s3Mock.commandCalls(DeleteObjectCommand).length, 1);
-    assert.strictEqual(result, key);
   });
   it('copyKey call CopyObjectCommand one time', async () => {
     const s3Mock = mockClient(S3Client);
@@ -136,7 +129,26 @@ describe('Storage Tests', () => {
     );
     assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
   });
-  it('evictKeys call DeleteObjectCommand 3 times', async () => {
+  it('evictKeys call DeleteObjectsCommand 1 times', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/preview/a/b/c.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.json/variations/v2' },
+        ],
+      });
+    const keyPrefix = 'local/preview/a/b/c.';
+    const result = await new Storage().evictKeys(keyPrefix);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
+    assert.strictEqual(result.length, 3);
+  });
+  it('evictKeys fails on error', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command).resolves({
       IsTruncated: false,
@@ -145,19 +157,12 @@ describe('Storage Tests', () => {
         { Key: 'local/preview/a/b/c.json/variations/v2' },
       ],
     });
-    const keyPrefix = 'local/preview/a/b/c.';
-    const result = await new Storage().evictKeys(keyPrefix);
-    assert.strictEqual(s3Mock.commandCalls(DeleteObjectCommand).length, 3);
-    assert.strictEqual(result.length, 3);
-  });
-  it('evictKey fails on error', async () => {
-    const s3Mock = mockClient(S3Client);
-    s3Mock.on(DeleteObjectCommand).rejects('Error');
+    s3Mock.on(DeleteObjectsCommand).rejects('Error');
     const key = 'local/preview/a/b/c.json';
     await assert.rejects(
-      async () => new Storage().evictKey(key),
+      async () => new Storage().evictKeys(key),
       {
-        message: 'An error occurred while trying to evict key in S3 bucket due to Error',
+        message: 'An error occurred while trying to evict key(s) in S3 bucket due to Error',
       },
     );
   });

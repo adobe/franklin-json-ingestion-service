@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "This config was generated using 'stryker init'. Please take a look at: https://stryker-mutator.io/docs/stryker-js/configuration/ for more information.",
+  "packageManager": "npm",
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress"
+  ],
+  "testRunner": "mocha",
+  "testRunner_comment": "More information about the mocha plugin can be found here: https://stryker-mutator.io/docs/stryker-js/mocha-runner",
+  "coverageAnalysis": "perTest",
+  "mutator": {
+    "excludedMutations": ["StringLiteral"]
+  },
+  "mochaOptions": {
+    "spec": [
+      "test/index.test.js",
+      "test/fullyhydrated.test.js",
+      "test/request-util.test.js",
+      "test/storage.test.js",
+      "test/utils.test.js"
+    ]
+  }
+}

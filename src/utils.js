@@ -32,15 +32,17 @@ export function replaceRefsWithObject(propKeys, target, referenceToObjectMapping
       const referencedObject = referenceToObjectMapping[ref];
       if (referencedObject) {
         finalObject[propKey] = referencedObject;
+      } else {
+        // remove references that are not solved
+        delete finalObject[propKey];
       }
     } else if (Array.isArray(ref)) {
       const newArray = [];
       ref.forEach((relPath) => {
         const referencedObject = referenceToObjectMapping[relPath];
         if (referencedObject) {
+          // copy resolved references only
           newArray.push(referencedObject);
-        } else {
-          newArray.push(relPath);
         }
       });
       finalObject[propKey] = newArray;

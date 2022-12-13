@@ -13,7 +13,7 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { Request } from '@adobe/fetch';
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { main } from '../src/index.js';
 
@@ -205,15 +205,77 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/preview/a/b/c touched');
     assert.strictEqual(await result.status, 200);
   });
-  it('evicts in preview success', async () => {
+  it('evicts in live remove from live only', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).resolves({
-      IsTruncated: false,
-      Contents: [
-        { Key: 'local/preview/a/b/c.json/variations/v1' },
-        { Key: 'local/preview/a/b/c.json/variations/v2' },
-      ],
-    });
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/live/a/b/c.json/variations/v1' },
+          { Key: 'local/live/a/b/c.json/variations/v2' },
+        ],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/preview/a/b/c.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.json/variations/v2' },
+        ],
+      });
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'live',
+            action: 'evict',
+            tenant: 'local',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.match(await result.text(), /.*live.* evicted/);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
+    assert.strictEqual(await result.status, 200);
+  });
+  it('evicts in preview implicitly remove from live', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/live/a/b/c.json/variations/v1' },
+          { Key: 'local/live/a/b/c.json/variations/v2' },
+        ],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/preview/a/b/c.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.json/variations/v2' },
+        ],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -230,18 +292,25 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json,local/preview/a/b/c.json/variations/v1,local/preview/a/b/c.json/variations/v2 evicted');
+    assert.match(await result.text(), /.*live.*preview.* evicted/);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in live success', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).resolves({
-      IsTruncated: false,
-      Contents: [
-        { Key: 'local/live/a/b/c.json/variations/v1' },
-        { Key: 'local/live/a/b/c.json/variations/v2' },
-      ],
-    });
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/live/a/b/c.json/variations/v1' },
+          { Key: 'local/live/a/b/c.json/variations/v2' },
+        ],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -261,9 +330,33 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.json/variations/v1,local/live/a/b/c.json/variations/v2 evicted');
     assert.strictEqual(await result.status, 200);
   });
-  it('evict key fails on internal error', async () => {
+  it('evicts folder in preview implicitly also in live', async () => {
     const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command).rejects('Error');
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/live/a/b/c.json' },
+          { Key: 'local/live/a/b/c.json/variations/v1' },
+          { Key: 'local/live/a/b/c.json/variations/v2' },
+        ],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [
+          { Key: 'local/preview/a/b/c.json' },
+          { Key: 'local/preview/a/b/c.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.json/variations/v2' },
+        ],
+      })
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -271,16 +364,18 @@ describe('Index Tests', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            mode: 'live',
+            mode: 'preview',
             action: 'evict',
             tenant: 'local',
-            relPath: 'a/b/c',
+            relPath: 'a/b',
           }),
         },
       ),
       {},
     );
-    assert.strictEqual(await result.status, 500);
-    assert.strictEqual(await result.text(), 'An error occurred while trying to evict key(s) in S3 bucket due to Error');
+    assert.strictEqual(await result.status, 200);
+    assert.match(await result.text(), /.*live.*preview.* evicted/);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
   });
 });
