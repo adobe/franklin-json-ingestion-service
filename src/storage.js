@@ -114,7 +114,7 @@ export default class Storage {
       const keyWithSuffix = `${key}${suffix}`;
       const list1 = await this.listKeys(`${key}/`);
       const list2 = await this.listKeys(`${keyWithSuffix}/`);
-      const = deletedKeys = [
+      const deletedKeys = [
         { Key: keyWithSuffix },
         ...list1,
         ...list2,
