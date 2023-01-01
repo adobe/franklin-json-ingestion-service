@@ -44,3 +44,4 @@ attach a debugger if needed.
 ### Deploying Franklin JSON Ingestion Service
 
 All commits to main that pass the testing will be deployed automatically. All commits to branches that will pass the testing will get commited as `/helix-services/service@ci<num>` and tagged with the CI build number.
+test

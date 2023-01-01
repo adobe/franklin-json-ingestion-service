@@ -9,4 +9,4 @@ tmp
 .nyc_output/
 # stryker temp files
 .stryker-tmp
-reports/mutation
+reports/mutation.git/
