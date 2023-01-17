@@ -12,15 +12,15 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
-import InvalidateClient from "../src/invalidate-client.js";
+import InvalidateClient from '../src/invalidate-client.js';
 
 describe('Invalidate Tests', () => {
   it('invalidate success', async () => {
-    const result = await new InvalidateClient().invalidate('some/key/test')
-    assert.strictEqual(result, true)
+    const result = await new InvalidateClient().invalidate('some/key/test');
+    assert.strictEqual(result, true);
   });
   it('invalidate failed', async () => {
-    const result = await new InvalidateClient(null,"http://localhost").invalidate('invalid/key/test')
-    assert.strictEqual(result, false)
+    const result = await new InvalidateClient(null, 'http://localhost').invalidate('invalid/key/test');
+    assert.strictEqual(result, false);
   });
 });

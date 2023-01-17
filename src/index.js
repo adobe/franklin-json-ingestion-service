@@ -16,7 +16,7 @@ import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
-import InvalidateClient from "./invalidate-client.js";
+import InvalidateClient from './invalidate-client.js';
 
 /**
  * This is the main function
