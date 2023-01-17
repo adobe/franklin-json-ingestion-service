@@ -19,7 +19,7 @@
     "prepare": "husky install"
   },
   "wsk": {
-    "nodeVersion": 16,
+    "nodeVersion": 18,
     "target": "aws",
     "name": "helix-services/json-ingestion-service@${version}",
     "testUrl": "/_status_check/healthcheck.json",
