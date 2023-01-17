@@ -16,6 +16,7 @@ import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
+import InvalidateClient from "./invalidate-client.js";
 
 /**
  * This is the main function
@@ -54,6 +55,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3LiveObjectPath, variation);
       }
+      await new InvalidateClient(context).invalidate(targetKey);
       return new Response(`${k} stored`);
     } else {
       // store to preview
@@ -68,6 +70,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3PreviewObjectPath, variation);
       }
+      await new InvalidateClient(context).invalidate(storedKey);
       return new Response(`${k} stored`);
     }
   } else if (action === 'touch') {
