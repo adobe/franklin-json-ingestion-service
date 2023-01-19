@@ -45,7 +45,7 @@ export default class Storage {
     const params = this.buildDefaultParams({
       Body: JSON.stringify(payload),
       Key: key,
-      ContentType: 'application/json',
+      ContentType: 'application/json;charset=utf-8',
       Metadata: {
         variation,
       },
