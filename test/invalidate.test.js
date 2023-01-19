@@ -25,6 +25,13 @@ describe('Invalidate Tests', () => {
     nock('http://localhost')
       .post('/endpoint')
       .reply(200, {});
+    const result = await new InvalidateClient({ log: console, env: { INVALIDATION_ENDPOINT: 'http://localhost/endpoint' } }).invalidate('some/key/test');
+    assert.strictEqual(result, true);
+  });
+  it('invalidate success', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .reply(200, {});
     const result = await new InvalidateClient().invalidate('some/key/test');
     assert.strictEqual(result, true);
   });

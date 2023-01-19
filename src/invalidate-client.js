@@ -12,9 +12,9 @@
 import { fetch } from '@adobe/fetch';
 
 export default class InvalidateClient {
-  constructor(context, baseURL) {
+  constructor(context) {
     this.context = context || { log: console };
-    this.baseURL = baseURL || process.env.INVALIDATION_ENDPOINT;
+    this.baseURL = this.context.env && this.context.env.INVALIDATION_ENDPOINT ? this.context.env.INVALIDATION_ENDPOINT : 'http://localhost/endpoint';
   }
 
   async invalidate(key) {
