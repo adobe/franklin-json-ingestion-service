@@ -11,12 +11,10 @@
  */
 import { fetch } from '@adobe/fetch';
 
-const DEFAULT_ENDPOINT = process.env.INVALIDATION_ENDPOINT || 'https://api.experiencecloud.live/publish-event/franklin-content-bus-headless';
-
 export default class InvalidateClient {
   constructor(context, baseURL) {
     this.context = context || { log: console };
-    this.baseURL = baseURL || DEFAULT_ENDPOINT;
+    this.baseURL = baseURL || process.env.INVALIDATION_ENDPOINT;
   }
 
   async invalidate(key) {

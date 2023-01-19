@@ -21,7 +21,6 @@ describe('Invalidate Tests', () => {
     nock.restore();
     nock.activate();
   });
-
   it('invalidate success', async () => {
     nock('http://localhost')
       .post('/endpoint')

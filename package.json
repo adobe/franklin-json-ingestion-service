@@ -22,6 +22,9 @@
     "nodeVersion": 18,
     "target": "aws",
     "name": "helix-services/json-ingestion-service@${version}",
+    "params-file": [
+      "invalidate.env"
+    ],
     "testUrl": "/_status_check/healthcheck.json",
     "memory": 256,
     "awsRole!important": "arn:aws:iam::282898975672:role/franklin-role-lambda-headless",
