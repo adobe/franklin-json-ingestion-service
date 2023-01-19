@@ -12,15 +12,32 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
+import nock from 'nock';
 import InvalidateClient from '../src/invalidate-client.js';
 
 describe('Invalidate Tests', () => {
+  beforeEach(() => {
+    nock.cleanAll();
+    nock.restore();
+    nock.activate();
+  });
+
   it('invalidate success', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .reply(200, {});
     const result = await new InvalidateClient().invalidate('some/key/test');
     assert.strictEqual(result, true);
   });
-  it('invalidate failed', async () => {
-    const result = await new InvalidateClient(null, 'http://localhost').invalidate('invalid/key/test');
+  it('invalidate failed unknown host', async () => {
+    const result = await new InvalidateClient().invalidate('invalid/key/test');
+    assert.strictEqual(result, false);
+  });
+  it('invalidate failed on 500', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .reply(500, {});
+    const result = await new InvalidateClient().invalidate('invalid/key/test');
     assert.strictEqual(result, false);
   });
 });

@@ -11,10 +11,12 @@
  */
 import { fetch } from '@adobe/fetch';
 
+const DEFAULT_ENDPOINT = process.env.INVALIDATION_ENDPOINT || 'https://api.experiencecloud.live/publish-event/franklin-content-bus-headless';
+
 export default class InvalidateClient {
   constructor(context, baseURL) {
     this.context = context || { log: console };
-    this.baseURL = baseURL || 'https://api.experiencecloud.live/publish-event/franklin-content-bus-headless';
+    this.baseURL = baseURL || DEFAULT_ENDPOINT;
   }
 
   async invalidate(key) {
@@ -26,9 +28,11 @@ export default class InvalidateClient {
           file: `/${key}`,
         },
       };
-      await fetch(this.baseURL, { method, body });
-      this.context.log.info(`invalidated ${key} success`);
-      return true;
+      const response = await fetch(this.baseURL, { method, body });
+      if (response.status === 200) {
+        this.context.log.info(`invalidated ${key} success`);
+        return true;
+      }
     } catch (err) {
       this.context.log.error(`invalidate failed due to ${err.message}`);
     }
