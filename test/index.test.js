@@ -16,6 +16,7 @@ import { Request } from '@adobe/fetch';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { main } from '../src/index.js';
+import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
@@ -33,7 +34,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -55,7 +56,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -78,7 +79,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -101,7 +102,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -125,7 +126,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -146,7 +147,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -168,7 +169,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'touch',
             mode: 'live',
@@ -190,7 +191,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'touch',
             mode: 'preview',
@@ -235,7 +236,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -281,7 +282,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',
@@ -316,7 +317,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -362,7 +363,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',

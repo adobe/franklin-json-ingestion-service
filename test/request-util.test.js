@@ -15,6 +15,7 @@
 import { Request } from '@adobe/fetch';
 import assert from 'assert';
 import RequestUtil from '../src/request-util.js';
+import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('RequestUtil Tests', () => {
   it('fails on invalid content-type', async () => {
@@ -39,7 +40,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: '{}',
         },
       ),
@@ -56,7 +57,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
           }),
@@ -75,7 +76,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 10,
@@ -95,7 +96,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: '/a/b/c',
@@ -115,7 +116,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -136,7 +137,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -158,7 +159,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'some+id',
           }),
@@ -177,7 +178,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: '{ test: invalid, }',
         },
       ),

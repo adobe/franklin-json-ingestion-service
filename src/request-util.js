@@ -9,6 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict', 'touch'];
@@ -29,7 +30,7 @@ export default class RequestUtil {
       return;
     }
 
-    if (this.request.headers.get('Content-Type') !== 'application/json') {
+    if (this.request.headers.get('Content-Type') !== APPLICATION_JSON) {
       this.errorMessage = 'Invalid request content type please check the API for details';
       return;
     }
