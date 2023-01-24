@@ -55,7 +55,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3LiveObjectPath, variation);
       }
-      await new InvalidateClient(context).invalidate(targetKey);
+      await new InvalidateClient(context).invalidate(`${s3LiveObjectPath}${selection}.json`, variation);
       return new Response(`${k} stored`);
     } else {
       // store to preview
@@ -70,7 +70,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3PreviewObjectPath, variation);
       }
-      await new InvalidateClient(context).invalidate(storedKey);
+      await new InvalidateClient(context).invalidate(`${s3PreviewObjectPath}${selection}.json`, variation);
       return new Response(`${k} stored`);
     }
   } else if (action === 'touch') {

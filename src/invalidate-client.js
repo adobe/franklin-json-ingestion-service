@@ -17,7 +17,7 @@ export default class InvalidateClient {
     this.baseURL = this.context.env && this.context.env.INVALIDATION_ENDPOINT ? this.context.env.INVALIDATION_ENDPOINT : 'http://localhost/endpoint';
   }
 
-  async invalidate(key) {
+  async invalidate(key, variation) {
     try {
       const method = 'POST';
       const body = {
@@ -26,6 +26,9 @@ export default class InvalidateClient {
           file: `/${key}`,
         },
       };
+      if (variation !== '') {
+        body.event.variation = variation
+      }
       const response = await fetch(this.baseURL, { method, body });
       if (response.status === 200) {
         this.context.log.info(`invalidated ${key} success`);
