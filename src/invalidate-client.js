@@ -27,7 +27,7 @@ export default class InvalidateClient {
         },
       };
       if (variation !== '') {
-        body.event.variation = variation
+        body.event.variation = variation;
       }
       const response = await fetch(this.baseURL, { method, body });
       if (response.status === 200) {
