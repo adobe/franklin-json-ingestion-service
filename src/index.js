@@ -90,6 +90,17 @@ async function run(request, context) {
     if (removePreview) {
       evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
     }
+    if (selection) {
+      const invalidateKeys = evictedKeys.map((entry) => {
+        const key = entry.Key;
+        const idx = key.indexOf(selection);
+        return idx >= 0 ? `${key.substring(0, idx)}${selection}.json` : null;
+      }).filter((value) => value != null);
+      await new InvalidateClient(context).invalidateAll(
+        Array.from(new Set(invalidateKeys)),
+        variation,
+      );
+    }
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }
 }

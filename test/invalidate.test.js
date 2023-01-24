@@ -46,4 +46,19 @@ describe('Invalidate Tests', () => {
     const result = await new InvalidateClient().invalidate('invalid/key/test');
     assert.strictEqual(result, false);
   });
+  it('invalidateAll success', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .times(2)
+      .reply(200, {});
+    const result = await new InvalidateClient(
+      {
+        log: console,
+        env: {
+          INVALIDATION_ENDPOINT: 'http://localhost/endpoint',
+        },
+      },
+    ).invalidateAll(['some/key/test', 'some/key/test2']);
+    assert.deepEqual(result, [{ key: 'some/key/test', value: true }, { key: 'some/key/test2', value: true }]);
+  });
 });

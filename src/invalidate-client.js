@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 import { fetch } from '@adobe/fetch';
+import processQueue from '@adobe/helix-shared-process-queue';
+import { cloneObject } from './utils.js';
 
 export default class InvalidateClient {
   constructor(context) {
@@ -38,5 +40,17 @@ export default class InvalidateClient {
       this.context.log.error(`invalidate failed due to ${err.message}`);
     }
     return false;
+  }
+
+  async invalidateAll(keys, variation) {
+    const thisClient = this;
+    return processQueue(cloneObject(keys), async (key) => {
+      let result;
+      if (key) {
+        const value = await thisClient.invalidate(key, variation);
+        result = { key, value };
+      }
+      return result;
+    });
   }
 }

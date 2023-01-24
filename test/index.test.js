@@ -15,6 +15,7 @@ import assert from 'assert';
 import { Request } from '@adobe/fetch';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
+import nock from 'nock';
 import { main } from '../src/index.js';
 import { APPLICATION_JSON } from '../src/constants.js';
 
@@ -332,6 +333,10 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 200);
   });
   it('evicts folder in preview implicitly also in live', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .times(2)
+      .reply(200, {});
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
@@ -368,6 +373,7 @@ describe('Index Tests', () => {
             mode: 'preview',
             action: 'evict',
             tenant: 'local',
+            selector: 'cfm.gql',
             relPath: 'a/b',
           }),
         },
