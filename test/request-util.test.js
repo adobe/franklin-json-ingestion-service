@@ -14,6 +14,7 @@
 
 import { Request } from '@adobe/fetch';
 import assert from 'assert';
+import { promises as fs } from 'fs';
 import RequestUtil from '../src/request-util.js';
 import { APPLICATION_JSON } from '../src/constants.js';
 
@@ -188,5 +189,21 @@ describe('RequestUtil Tests', () => {
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
     assert.strictEqual(reqUtil.errorMessage, 'Error while parsing the body as json due to Unexpected token t in JSON at position 2');
+  });
+  it('support base64 compressed json payload', async () => {
+    const body = await fs.readFile('test/valid_compressed.json', 'utf-8');
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body,
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, true);
   });
 });
