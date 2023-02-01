@@ -11,7 +11,7 @@
  */
 import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
-import { wrap as status } from '@adobe/helix-status';
+import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import { renderFullyHydrated } from './fullyhydrated.js';
@@ -92,5 +92,5 @@ async function run(request, context) {
 }
 
 export const main = wrap(run)
-  .with(status)
+  .with(helixStatus)
   .with(logger);
