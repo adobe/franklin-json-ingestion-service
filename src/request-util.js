@@ -13,10 +13,10 @@ import { promisify } from 'util';
 import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
 
-const BASE64_HEADER = 'BASE64 ';
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict', 'touch'];
 const VALID_METHODS = ['POST'];
+
 const gunzip = promisify(zlib.gunzip);
 
 export default class RequestUtil {
@@ -34,20 +34,18 @@ export default class RequestUtil {
       return;
     }
 
-    if (this.request.headers.get('Content-Type') !== APPLICATION_JSON) {
+    if (!this.request.headers.get('Content-Type').startsWith(APPLICATION_JSON)) {
       this.errorMessage = 'Invalid request content type please check the API for details';
       return;
     }
 
     try {
-      this.text = await this.request.text();
-      if (this.text.indexOf(BASE64_HEADER) === 0) {
-        // decode base64 encoded for large json
-        const base64part = this.text.substring(BASE64_HEADER.length);
-        const data = await gunzip(Buffer.from(base64part, 'base64'));
-        this.json = JSON.parse(data.toString('utf8'));
+      if (this.request.headers.get('Content-Encoding') === 'gzip') {
+        const buffer = await this.request.buffer();
+        const decompressed = await gunzip(buffer);
+        this.json = JSON.parse(decompressed.toString());
       } else {
-        this.json = JSON.parse(this.text);
+        this.json = await this.request.json();
       }
     } catch (parseError) {
       this.errorMessage = `Error while parsing the body as json due to ${parseError.message}`;
