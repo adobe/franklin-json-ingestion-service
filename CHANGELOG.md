@@ -1,3 +1,19 @@
+# [1.5.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.4.2...v1.5.0) (2023-02-17)
+
+
+### Bug Fixes
+
+* **deps:** update adobe fixes ([#19](https://github.com/adobe/franklin-json-ingestion-service/issues/19)) ([00d2e9e](https://github.com/adobe/franklin-json-ingestion-service/commit/00d2e9e10fd10519d5ff3d0775f1ce38e7828da1))
+* **deps:** update adobe major ([ee5799e](https://github.com/adobe/franklin-json-ingestion-service/commit/ee5799e468b343ba237a5eea4c9bb3c1df6e1221))
+* **deps:** update dependency @aws-sdk/client-s3 to v3.264.0 ([#29](https://github.com/adobe/franklin-json-ingestion-service/issues/29)) ([e5a6bc7](https://github.com/adobe/franklin-json-ingestion-service/commit/e5a6bc72416f4d5bab7481594b894ad39befccbc))
+* **deps:** update external fixes ([6c3febe](https://github.com/adobe/franklin-json-ingestion-service/commit/6c3febef8f1d2f3033baed8fc4cc5317850ed166))
+* **deps:** update external fixes ([#25](https://github.com/adobe/franklin-json-ingestion-service/issues/25)) ([20a0d64](https://github.com/adobe/franklin-json-ingestion-service/commit/20a0d646d347e3562173813bd1b211f1a0db326e))
+
+
+### Features
+
+* SITES-9963 adding invalidate cache logic ([#26](https://github.com/adobe/franklin-json-ingestion-service/issues/26)) ([4482d1a](https://github.com/adobe/franklin-json-ingestion-service/commit/4482d1a5c1fe846e47c78609d3e56f47155ab921))
+
 ## [1.4.2](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.4.1...v1.4.2) (2022-12-13)
 
 
