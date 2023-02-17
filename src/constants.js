@@ -12,4 +12,4 @@
 export const PN_MODEL = '_model';
 export const PN_PATH = '_path';
 export const DEFAULT_BUCKET = 'franklin-content-bus-headless';
-export const APPLICATION_JSON = 'application/json; charset=utf-8';
+export const APPLICATION_JSON = 'application/json';
