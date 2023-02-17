@@ -16,6 +16,7 @@ import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
+import InvalidateClient from './invalidate-client.js';
 
 /**
  * This is the main function
@@ -54,6 +55,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3LiveObjectPath, variation);
       }
+      await new InvalidateClient(context).invalidate(`${s3LiveObjectPath}${selection}.json`, variation);
       return new Response(`${k} stored`);
     } else {
       // store to preview
@@ -68,6 +70,7 @@ async function run(request, context) {
         // generate the fully hydrated right after
         await renderFullyHydrated(context, s3PreviewObjectPath, variation);
       }
+      await new InvalidateClient(context).invalidate(`${s3PreviewObjectPath}${selection}.json`, variation);
       return new Response(`${k} stored`);
     }
   } else if (action === 'touch') {
@@ -86,6 +89,17 @@ async function run(request, context) {
     }
     if (removePreview) {
       evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
+    }
+    if (selection) {
+      const invalidateKeys = evictedKeys.map((entry) => {
+        const key = entry.Key;
+        const idx = key.indexOf(selection);
+        return idx >= 0 ? `${key.substring(0, idx)}${selection}.json` : null;
+      }).filter((value) => value != null);
+      await new InvalidateClient(context).invalidateAll(
+        Array.from(new Set(invalidateKeys)),
+        variation,
+      );
     }
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }

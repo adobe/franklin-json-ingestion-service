@@ -22,6 +22,9 @@
     "nodeVersion": 18,
     "target": "aws",
     "name": "helix-services/json-ingestion-service@${version}",
+    "params-file": [
+      "invalidate.env"
+    ],
     "testUrl": "/_status_check/healthcheck.json",
     "memory": 256,
     "awsRole!important": "arn:aws:iam::282898975672:role/franklin-role-lambda-headless",
@@ -74,6 +77,7 @@
     "lint-staged": "13.1.0",
     "mocha": "10.2.0",
     "mocha-multi-reporters": "1.5.1",
+    "nock": "^13.3.0",
     "nodemon": "2.0.20",
     "semantic-release": "19.0.5"
   },

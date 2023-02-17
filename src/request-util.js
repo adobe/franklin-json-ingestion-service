@@ -9,10 +9,15 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+import { promisify } from 'util';
+import zlib from 'zlib';
+import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict', 'touch'];
 const VALID_METHODS = ['POST'];
+
+const gunzip = promisify(zlib.gunzip);
 
 export default class RequestUtil {
   constructor(request) {
@@ -29,13 +34,19 @@ export default class RequestUtil {
       return;
     }
 
-    if (this.request.headers.get('Content-Type') !== 'application/json') {
+    if (!this.request.headers.get('Content-Type').startsWith(APPLICATION_JSON)) {
       this.errorMessage = 'Invalid request content type please check the API for details';
       return;
     }
 
     try {
-      this.json = await this.request.json();
+      if (this.request.headers.get('Content-Encoding') === 'gzip') {
+        const buffer = await this.request.buffer();
+        const decompressed = await gunzip(buffer);
+        this.json = JSON.parse(decompressed.toString());
+      } else {
+        this.json = await this.request.json();
+      }
     } catch (parseError) {
       this.errorMessage = `Error while parsing the body as json due to ${parseError.message}`;
       return;

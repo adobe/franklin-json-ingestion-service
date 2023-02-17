@@ -15,7 +15,9 @@ import assert from 'assert';
 import { Request } from '@adobe/fetch';
 import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
+import nock from 'nock';
 import { main } from '../src/index.js';
+import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
@@ -33,7 +35,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -55,7 +57,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -78,7 +80,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -101,7 +103,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -125,7 +127,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -146,7 +148,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -168,7 +170,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'touch',
             mode: 'live',
@@ -190,7 +192,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             action: 'touch',
             mode: 'preview',
@@ -235,7 +237,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -281,7 +283,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',
@@ -316,7 +318,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -331,6 +333,10 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 200);
   });
   it('evicts folder in preview implicitly also in live', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .times(2)
+      .reply(200, {});
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
@@ -362,11 +368,12 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',
             tenant: 'local',
+            selector: 'cfm.gql',
             relPath: 'a/b',
           }),
         },

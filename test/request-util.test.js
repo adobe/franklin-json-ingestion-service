@@ -13,8 +13,10 @@
 /* eslint-env mocha */
 
 import { Request } from '@adobe/fetch';
+import zlib from 'zlib';
 import assert from 'assert';
 import RequestUtil from '../src/request-util.js';
+import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('RequestUtil Tests', () => {
   it('fails on invalid content-type', async () => {
@@ -39,7 +41,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: '{}',
         },
       ),
@@ -56,7 +58,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
           }),
@@ -75,7 +77,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 10,
@@ -95,7 +97,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: '/a/b/c',
@@ -115,7 +117,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -136,7 +138,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -158,7 +160,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'some+id',
           }),
@@ -177,7 +179,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': APPLICATION_JSON },
           body: '{ test: invalid, }',
         },
       ),
@@ -187,5 +189,29 @@ describe('RequestUtil Tests', () => {
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
     assert.strictEqual(reqUtil.errorMessage, 'Error while parsing the body as json due to Unexpected token t in JSON at position 2');
+  });
+  it('support gzip compressed request', async () => {
+    const jsonBody = JSON.stringify({
+      tenant: 'local',
+      relPath: 'a/b/c',
+      mode: 'preview',
+      action: 'store',
+      payload: {
+        test: 1,
+      },
+    });
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON, 'Transfer-Encoding': 'chuncked', 'Content-Encoding': 'gzip' },
+          body: zlib.gzipSync(jsonBody),
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, true);
   });
 });
