@@ -35,6 +35,28 @@ describe('Invalidate Tests', () => {
     const result = await new InvalidateClient().invalidate('some/key/test');
     assert.strictEqual(result, true);
   });
+  it('invalidate variations success', async () => {
+    nock('http://localhost')
+      .post('/endpoint', (body) => body.event && body.event.variation.startsWith('var'))
+      .times(2)
+      .reply(200, {});
+    const result = await new InvalidateClient()
+      .invalidateVariations('some/key/test', ['var1', 'var2']);
+    assert.strictEqual(
+      JSON.stringify(result),
+      JSON.stringify([
+        { key: 'some/key/test', value: true, variation: 'var1' },
+        { key: 'some/key/test', value: true, variation: 'var2' },
+      ]),
+    );
+  });
+  it('invalidate variations null', async () => {
+    nock('http://localhost')
+      .post('/endpoint')
+      .reply(200, {});
+    const result = await new InvalidateClient().invalidateVariations('some/key/test', [null]);
+    assert.strictEqual(JSON.stringify(result), JSON.stringify([]));
+  });
   it('invalidate failed unknown host', async () => {
     const result = await new InvalidateClient().invalidate('invalid/key/test');
     assert.strictEqual(result, false);
@@ -58,7 +80,19 @@ describe('Invalidate Tests', () => {
           INVALIDATION_ENDPOINT: 'http://localhost/endpoint',
         },
       },
-    ).invalidateAll(['some/key/test', 'some/key/test2']);
-    assert.deepEqual(result, [{ key: 'some/key/test', value: true }, { key: 'some/key/test2', value: true }]);
+    ).invalidateAll(
+      [
+        { Key: 'some/key/test.cfm.gql.json' },
+        { Key: 'some/key/test.cfm.gql.json/variations/var1' },
+      ],
+      '.cfm.gql',
+    );
+    assert.deepEqual(
+      result,
+      [
+        { key: 'some/key/test.cfm.gql.json', value: true, variation: null },
+        { key: 'some/key/test.cfm.gql.json', value: true, variation: 'var1' },
+      ],
+    );
   });
 });

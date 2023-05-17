@@ -74,3 +74,48 @@ export function collectReferences(refProperties, mainJson) {
   });
   return Array.from(collectedReferences);
 }
+
+export function filterVariationsKeys(keys, keptVariations) {
+  const excludeList = keptVariations || [];
+  if (Array.isArray(keys)) {
+    return keys.filter((o) => {
+      const key = o.Key;
+      if (key) {
+        return !excludeList.some((v) => key.endsWith(`.json/variations/${v}`));
+      } else {
+        return false;
+      }
+    });
+  } else {
+    return keys;
+  }
+}
+
+export async function cleanupVariations(storage, prefix, suffix, variations) {
+  const allVariationsKeys = await storage.listKeys(`${prefix}${suffix}/variations/`);
+  const toEvictKeys = filterVariationsKeys(allVariationsKeys, variations);
+  return storage.deleteKeys(toEvictKeys);
+}
+
+export function extractRootKey(key, selection) {
+  const pattern = `${selection}.json`;
+  const idx = key.indexOf(pattern);
+  return idx >= 0 ? `${key.substring(0, idx + pattern.length)}` : null;
+}
+
+export function extractVariation(key, selection) {
+  const pattern = `${selection}.json/variations/`;
+  const idx = key.indexOf(pattern);
+  return idx >= 0 ? `${key.substring(idx + pattern.length)}` : null;
+}
+
+export function extractVariations(s3Keys, selection) {
+  return s3Keys.map((entry) => {
+    const key = entry.Key;
+    if (key && selection) {
+      return extractVariation(key, selection);
+    } else {
+      return null;
+    }
+  }).filter((value) => value != null);
+}

@@ -13,7 +13,7 @@ security:
   - ApiKey: [ ]
   - Organization: [ ]
 servers:
-  - url: https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci120
+  - url: https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/v1
 paths:
   /:
     post:
@@ -39,12 +39,13 @@ components:
             properties:
               action:
                 type: string
-                description: The command key to store | evict | touch the given relPath under specific tenant and mode.
+                description: The command key to store | evict | touch | cleanup  the given relPath under specific tenant and mode.
                 example: store
                 enum:
                   - store
                   - evict
                   - touch
+                  - cleanup
               tenant:
                 type: string
                 description: Define where it get stored under S3 main folder. i.e <tenant>
@@ -70,6 +71,12 @@ components:
                 type: string
                 description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.<selector>.json/variations/<variation>
                 example: var1
+              keptVariations:
+                type: array
+                items:
+                  type: string
+                description: Define the list of variations to kept when performing cleanup action
+                example: [ "var1", "var4" ]
               selector:
                 type: string
                 description: Optional, the selector information used to store the json i.e <tenant>/<mode><relPath>.<selector>.json

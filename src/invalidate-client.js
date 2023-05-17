@@ -11,7 +11,7 @@
  */
 import { fetch } from '@adobe/fetch';
 import processQueue from '@adobe/helix-shared-process-queue';
-import { cloneObject } from './utils.js';
+import { cloneObject, extractRootKey, extractVariation } from './utils.js';
 
 export default class InvalidateClient {
   constructor(context) {
@@ -28,7 +28,7 @@ export default class InvalidateClient {
           file: `/${key}`,
         },
       };
-      if (variation !== '') {
+      if (variation && variation !== '') {
         body.event.variation = variation;
       }
       const response = await fetch(this.baseURL, { method, body });
@@ -42,13 +42,30 @@ export default class InvalidateClient {
     return false;
   }
 
-  async invalidateAll(keys, variation) {
+  async invalidateAll(s3Keys, selection) {
     const thisClient = this;
-    return processQueue(cloneObject(keys), async (key) => {
+    return processQueue(cloneObject(s3Keys), async (s3Key) => {
       let result;
-      if (key) {
+      if (s3Key) {
+        const key = s3Key.Key;
+        if (key) {
+          const rootKey = extractRootKey(key, selection);
+          const variation = extractVariation(key, selection);
+          const value = await thisClient.invalidate(rootKey, variation);
+          result = { key: rootKey, value, variation };
+        }
+      }
+      return result;
+    });
+  }
+
+  async invalidateVariations(key, variations) {
+    const thisClient = this;
+    return processQueue(cloneObject(variations), async (variation) => {
+      let result;
+      if (variation) {
         const value = await thisClient.invalidate(key, variation);
-        result = { key, value };
+        result = { key, value, variation };
       }
       return result;
     });

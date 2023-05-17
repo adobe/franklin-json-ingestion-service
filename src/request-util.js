@@ -14,7 +14,7 @@ import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict', 'touch'];
+const VALID_ACTIONS = ['store', 'evict', 'touch', 'cleanup'];
 const VALID_METHODS = ['POST'];
 
 const gunzip = promisify(zlib.gunzip);
@@ -75,6 +75,13 @@ export default class RequestUtil {
     if (!VALID_ACTIONS.includes(this.action)) {
       this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
       return;
+    }
+    if (this.action === 'cleanup') {
+      this.keptVariations = this.json.keptVariations;
+      if (!this.keptVariations) {
+        this.errorMessage = 'Invalid parameter missing keptVariations parameter for cleanup';
+        return;
+      }
     }
     this.variation = this.json.variation;
     this.payload = this.json.payload;
