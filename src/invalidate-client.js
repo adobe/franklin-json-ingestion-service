@@ -33,7 +33,7 @@ export default class InvalidateClient {
       }
       const response = await fetch(this.baseURL, { method, body });
       if (response.status === 200) {
-        this.context.log.info(`invalidated ${key} success`);
+        this.context.log.info(`invalidated key=${key} variation=${variation} success`);
         return true;
       }
     } catch (err) {
