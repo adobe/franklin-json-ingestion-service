@@ -410,6 +410,25 @@ describe('Index Tests', () => {
         },
       );
     }
+    it('nothing to evict', async () => {
+      nock('http://localhost')
+        .post('/endpoint', eventCaptorMatcher)
+        .times(2)
+        .reply(200, {});
+      const s3Mock = mockClient(S3Client);
+      s3Mock.on(ListObjectsV2Command)
+        .resolvesOnce({
+          IsTruncated: false,
+          Contents: [],
+        });
+      const resultPreview = await main(
+        mockRequest('preview'),
+        {},
+      );
+      assert.strictEqual(await resultPreview.text(), 'no variations found, so nothing to got evicted');
+      assert.strictEqual(await resultPreview.status, 200);
+      assert.strictEqual(JSON.stringify(eventCaptor), JSON.stringify([]));
+    });
     it('mode preview', async () => {
       nock('http://localhost')
         .post('/endpoint', eventCaptorMatcher)
