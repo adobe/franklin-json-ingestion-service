@@ -137,7 +137,7 @@ export default class Storage {
       return keys;
     } catch (err) {
       this.context.log.error(`deleteKeys failed ${err.message}`);
-      throw new Error(`An error occurred while trying to deleteKeys with key(s) in S3 bucket due to ${err.message}`);
+      throw new Error(`deleteKeys failed ${err.message}`);
     }
   }
 }
