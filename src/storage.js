@@ -128,11 +128,13 @@ export default class Storage {
 
   async deleteKeys(keys) {
     try {
-      await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
-        Delete: {
-          Objects: cloneObject(keys),
-        },
-      })));
+      if (keys && keys.length > 0) {
+        await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
+          Delete: {
+            Objects: cloneObject(keys),
+          },
+        })));
+      }
       this.context.log.info(`deleteKeys ${keys.map((i) => i.Key).join(',')} successful`);
       return keys;
     } catch (err) {
