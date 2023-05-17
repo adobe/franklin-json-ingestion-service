@@ -88,7 +88,11 @@ async function run(request, context) {
       s3ObjectPath,
       extractVariations(evictedVariationsKeys, selection),
     );
-    return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
+    if (evictedVariationsKeys.length > 0) {
+      return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
+    } else {
+      return new Response(`no variations found, so nothing to got evicted`);
+    }
   } else {
     const removePreview = mode === 'preview';
     const removeLive = mode === 'live' || mode === 'preview';
