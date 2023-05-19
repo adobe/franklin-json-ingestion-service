@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.5.4...v1.6.0) (2023-05-19)
+
+
+### Features
+
+* SITES-13393 add new action to perform cleanup of unused variations ([#46](https://github.com/adobe/franklin-json-ingestion-service/issues/46)) ([e9dddad](https://github.com/adobe/franklin-json-ingestion-service/commit/e9dddad0d0c9f8e3dae4959b51948e9e0714b2c7))
+
 ## [1.5.4](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.5.3...v1.5.4) (2023-03-05)
 
 
