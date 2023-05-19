@@ -17,6 +17,7 @@ import Storage from './storage.js';
 import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
 import InvalidateClient from './invalidate-client.js';
+import { cleanupVariations, extractVariations } from './utils.js';
 
 /**
  * This is the main function
@@ -33,7 +34,7 @@ async function run(request, context) {
   }
 
   const {
-    action, mode, selector, tenant, relPath, payload, variation,
+    action, mode, selector, tenant, relPath, payload, variation, keptVariations,
   } = requestUtil;
 
   const storage = new Storage(context);
@@ -80,6 +81,18 @@ async function run(request, context) {
       await renderFullyHydrated(context, baseKey, variation);
     }
     return new Response(`${baseKey} touched`);
+  } else if (action === 'cleanup') {
+    const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+    const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
+    await new InvalidateClient(context).invalidateVariations(
+      s3ObjectPath,
+      extractVariations(evictedVariationsKeys, selection),
+    );
+    if (evictedVariationsKeys.length > 0) {
+      return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
+    } else {
+      return new Response('no variations found, so nothing to got evicted');
+    }
   } else {
     const removePreview = mode === 'preview';
     const removeLive = mode === 'live' || mode === 'preview';
@@ -91,14 +104,9 @@ async function run(request, context) {
       evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
     }
     if (selection) {
-      const invalidateKeys = evictedKeys.map((entry) => {
-        const key = entry.Key;
-        const idx = key.indexOf(selection);
-        return idx >= 0 ? `${key.substring(0, idx)}${selection}.json` : null;
-      }).filter((value) => value != null);
       await new InvalidateClient(context).invalidateAll(
-        Array.from(new Set(invalidateKeys)),
-        variation,
+        evictedKeys,
+        selection,
       );
     }
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);

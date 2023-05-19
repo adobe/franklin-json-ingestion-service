@@ -162,7 +162,7 @@ describe('Storage Tests', () => {
     await assert.rejects(
       async () => new Storage().evictKeys(key),
       {
-        message: 'An error occurred while trying to evict key(s) in S3 bucket due to Error',
+        message: 'An error occurred while trying to evict key(s) in S3 bucket due to deleteKeys failed Error',
       },
     );
   });

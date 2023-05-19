@@ -119,16 +119,27 @@ export default class Storage {
         ...list1,
         ...list2,
       ];
-      await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
-        Delete: {
-          Objects: cloneObject(deletedKeys),
-        },
-      })));
-      this.context.log.info(`evictKeys ${deletedKeys.map((i) => i.Key).join(',')} successful`);
-      return deletedKeys;
+      return await this.deleteKeys(deletedKeys);
     } catch (err) {
       this.context.log.error(`evictKeys failed ${err.message}`);
       throw new Error(`An error occurred while trying to evict key(s) in S3 bucket due to ${err.message}`);
+    }
+  }
+
+  async deleteKeys(keys) {
+    try {
+      if (keys && keys.length > 0) {
+        await this.s3.send(new DeleteObjectsCommand(this.buildDefaultParams({
+          Delete: {
+            Objects: cloneObject(keys),
+          },
+        })));
+      }
+      this.context.log.info(`deleteKeys ${keys.map((i) => i.Key).join(',')} successful`);
+      return keys;
+    } catch (err) {
+      this.context.log.error(`deleteKeys failed ${err.message}`);
+      throw new Error(`deleteKeys failed ${err.message}`);
     }
   }
 }
