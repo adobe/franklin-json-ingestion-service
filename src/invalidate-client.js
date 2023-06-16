@@ -20,6 +20,7 @@ export default class InvalidateClient {
   }
 
   async invalidate(key, variation) {
+    let success = false;
     try {
       const method = 'POST';
       const body = {
@@ -34,12 +35,14 @@ export default class InvalidateClient {
       const response = await fetch(this.baseURL, { method, body });
       if (response.status === 200) {
         this.context.log.info(`invalidated key=${key} variation=${variation} success`);
-        return true;
+        success = true;
+      } else {
+        this.context.log.error(`invalidate key=${key} variation=${variation} failed due to ${response.status} code`);
       }
     } catch (err) {
       this.context.log.error(`invalidate failed due to ${err.message}`);
     }
-    return false;
+    return success;
   }
 
   async invalidateAll(s3Keys, selection) {
