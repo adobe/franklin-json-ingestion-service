@@ -68,7 +68,7 @@ export default class InvalidateClient {
       let result;
       if (variation) {
         const value = await thisClient.invalidate(rootKey, variation);
-        result = { rootKey, value, variation };
+        result = { key: rootKey, value, variation };
       }
       return result;
     });
