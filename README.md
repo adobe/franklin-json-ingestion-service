@@ -44,3 +44,6 @@ attach a debugger if needed.
 ### Deploying Franklin JSON Ingestion Service
 
 All commits to main that pass the testing will be deployed automatically. All commits to branches that will pass the testing will get commited as `/helix-services/service@ci<num>` and tagged with the CI build number.
+
+## Note on commit conventions
+It uses [semantic-release/commit-analyzer](https://github.com/semantic-release/commit-analyzer) to decide to release or not on main branch. If commit message starts with "chore" it will not detect other messages (i.e fix, feat etc..). So make sure to remove chore in the merge messages.
