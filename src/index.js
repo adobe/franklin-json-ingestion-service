@@ -85,7 +85,7 @@ async function run(request, context) {
     const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
     const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
     await new InvalidateClient(context).invalidateVariations(
-      s3ObjectPath,
+      `${s3ObjectPath}${selection}.json`,
       extractVariations(evictedVariationsKeys, selection),
     );
     if (evictedVariationsKeys.length > 0) {

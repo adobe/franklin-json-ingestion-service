@@ -62,13 +62,13 @@ export default class InvalidateClient {
     });
   }
 
-  async invalidateVariations(key, variations) {
+  async invalidateVariations(rootKey, variations) {
     const thisClient = this;
     return processQueue(cloneObject(variations), async (variation) => {
       let result;
       if (variation) {
-        const value = await thisClient.invalidate(key, variation);
-        result = { key, value, variation };
+        const value = await thisClient.invalidate(rootKey, variation);
+        result = { rootKey, value, variation };
       }
       return result;
     });
