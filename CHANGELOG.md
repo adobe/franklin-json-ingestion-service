@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.6.0...v1.6.1) (2023-06-19)
+
+
+### Bug Fixes
+
+* adding information how semantic release works ([#48](https://github.com/adobe/franklin-json-ingestion-service/issues/48)) ([516159f](https://github.com/adobe/franklin-json-ingestion-service/commit/516159fa388d72e7aace214c3eafdac7b6bc2bcb))
+
 # [1.6.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.5.4...v1.6.0) (2023-05-19)
 
 
