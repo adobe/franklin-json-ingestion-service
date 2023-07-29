@@ -47,10 +47,10 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json stored');
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
     assert.strictEqual(await result.status, 200);
   });
-  it('stores in preview with selector parameter', async () => {
+  it('stores in preview', async () => {
     mockClient(S3Client);
     const result = await main(
       new Request(
@@ -61,7 +61,6 @@ describe('Index Tests', () => {
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
-            selector: 'cfm.gql',
             payload: {
               test: 'value',
             },
@@ -71,29 +70,6 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
-    assert.strictEqual(await result.status, 200);
-  });
-  it('stores in preview with franklin selector parameter', async () => {
-    mockClient(S3Client);
-    const result = await main(
-      new Request(
-        'https://localhost/',
-        {
-          method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
-          body: JSON.stringify({
-            tenant: 'local',
-            relPath: 'a/b/c',
-            selector: 'franklin',
-            payload: {
-              test: 'value',
-            },
-          }),
-        },
-      ),
-      {},
-    );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.franklin.json stored');
     assert.strictEqual(await result.status, 200);
   });
   it('stores variation', async () => {
@@ -116,7 +92,7 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c.json/variations/max stored');
+    assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json/variations/max stored');
     assert.strictEqual(await result.status, 200);
   });
 
@@ -133,78 +109,15 @@ describe('Index Tests', () => {
             mode: 'live',
             tenant: 'local',
             relPath: 'a/b/c',
+            payload: {
+              test: 'value',
+            },
           }),
         },
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c.json stored');
-    assert.strictEqual(await result.status, 200);
-  });
-  it('stores in live with franklin selector success', async () => {
-    mockClient(S3Client);
-    const result = await main(
-      new Request(
-        'https://localhost/',
-        {
-          method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
-          body: JSON.stringify({
-            action: 'store',
-            mode: 'live',
-            selector: 'franklin',
-            tenant: 'local',
-            relPath: 'a/b/c',
-          }),
-        },
-      ),
-      {},
-    );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c.franklin.json stored');
-    assert.strictEqual(await result.status, 200);
-  });
-  it('touch in live with franklin selector success', async () => {
-    mockClient(S3Client);
-    const result = await main(
-      new Request(
-        'https://localhost/',
-        {
-          method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
-          body: JSON.stringify({
-            action: 'touch',
-            mode: 'live',
-            selector: 'franklin',
-            tenant: 'local',
-            relPath: 'a/b/c',
-          }),
-        },
-      ),
-      {},
-    );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c touched');
-    assert.strictEqual(await result.status, 200);
-  });
-  it('touch in preview with franklin selector success', async () => {
-    mockClient(S3Client);
-    const result = await main(
-      new Request(
-        'https://localhost/',
-        {
-          method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
-          body: JSON.stringify({
-            action: 'touch',
-            mode: 'preview',
-            selector: 'franklin',
-            tenant: 'local',
-            relPath: 'a/b/c',
-          }),
-        },
-      ),
-      {},
-    );
-    assert.strictEqual(await result.text(), 'local/preview/a/b/c touched');
+    assert.strictEqual(await result.text(), 'local/live/a/b/c.cfm.gql.json stored');
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in live remove from live only', async () => {
@@ -217,8 +130,8 @@ describe('Index Tests', () => {
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-          { Key: 'local/live/a/b/c.json/variations/v1' },
-          { Key: 'local/live/a/b/c.json/variations/v2' },
+          { Key: 'local/live/a/b/c.cfm.gql.json/variations/v1' },
+          { Key: 'local/live/a/b/c.cfm.gql.json/variations/v2' },
         ],
       })
       .resolvesOnce({
@@ -228,8 +141,8 @@ describe('Index Tests', () => {
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-          { Key: 'local/preview/a/b/c.json/variations/v1' },
-          { Key: 'local/preview/a/b/c.json/variations/v2' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v2' },
         ],
       });
     const result = await main(
@@ -253,7 +166,7 @@ describe('Index Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
     assert.strictEqual(await result.status, 200);
   });
-  it('evicts in preview implicitly remove from live', async () => {
+  it('evicts in preview should not remove from live', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
@@ -263,19 +176,8 @@ describe('Index Tests', () => {
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-          { Key: 'local/live/a/b/c.json/variations/v1' },
-          { Key: 'local/live/a/b/c.json/variations/v2' },
-        ],
-      })
-      .resolvesOnce({
-        IsTruncated: false,
-        Contents: [],
-      })
-      .resolvesOnce({
-        IsTruncated: false,
-        Contents: [
-          { Key: 'local/preview/a/b/c.json/variations/v1' },
-          { Key: 'local/preview/a/b/c.json/variations/v2' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v2' },
         ],
       });
     const result = await main(
@@ -294,9 +196,9 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.match(await result.text(), /.*live.*preview.* evicted/);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
-    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
+    assert.match(await result.text(), /.*preview.* evicted/);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
     assert.strictEqual(await result.status, 200);
   });
   it('evicts in live success', async () => {
@@ -309,8 +211,8 @@ describe('Index Tests', () => {
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-          { Key: 'local/live/a/b/c.json/variations/v1' },
-          { Key: 'local/live/a/b/c.json/variations/v2' },
+          { Key: 'local/live/a/b/c.cfm.gql.json/variations/v1' },
+          { Key: 'local/live/a/b/c.cfm.gql.json/variations/v2' },
         ],
       });
     const result = await main(
@@ -329,10 +231,10 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(await result.text(), 'local/live/a/b/c.json,local/live/a/b/c.json/variations/v1,local/live/a/b/c.json/variations/v2 evicted');
+    assert.strictEqual(await result.text(), 'local/live/a/b/c.cfm.gql.json,local/live/a/b/c.cfm.gql.json/variations/v1,local/live/a/b/c.cfm.gql.json/variations/v2 evicted');
     assert.strictEqual(await result.status, 200);
   });
-  it('evicts folder in preview implicitly also in live', async () => {
+  it('evicts folder in preview should not remove in live', async () => {
     nock('http://localhost')
       .post('/endpoint')
       .times(2)
@@ -341,22 +243,14 @@ describe('Index Tests', () => {
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
         IsTruncated: false,
-        Contents: [
-          { Key: 'local/live/a/b/c.json' },
-          { Key: 'local/live/a/b/c.json/variations/v1' },
-          { Key: 'local/live/a/b/c.json/variations/v2' },
-        ],
-      })
-      .resolvesOnce({
-        IsTruncated: false,
         Contents: [],
       })
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-          { Key: 'local/preview/a/b/c.json' },
-          { Key: 'local/preview/a/b/c.json/variations/v1' },
-          { Key: 'local/preview/a/b/c.json/variations/v2' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v1' },
+          { Key: 'local/preview/a/b/c.cfm.gql.json/variations/v2' },
         ],
       })
       .resolvesOnce({
@@ -373,7 +267,6 @@ describe('Index Tests', () => {
             mode: 'preview',
             action: 'evict',
             tenant: 'local',
-            selector: 'cfm.gql',
             relPath: 'a/b',
           }),
         },
@@ -381,9 +274,9 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(await result.status, 200);
-    assert.match(await result.text(), /.*live.*preview.* evicted/);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 4);
-    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 2);
+    assert.match(await result.text(), /.*preview.* evicted/);
+    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
   });
   describe('cleanup variation', () => {
     let eventCaptor = [];
@@ -403,7 +296,6 @@ describe('Index Tests', () => {
             mode,
             action: 'cleanup',
             tenant: 'local',
-            selector: 'cfm.gql',
             relPath: 'a/b/c',
             keptVariations: ['var1', 'var2'],
           }),

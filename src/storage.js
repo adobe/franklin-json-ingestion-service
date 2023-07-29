@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 import {
-  CopyObjectCommand, GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client, DeleteObjectsCommand,
@@ -57,37 +56,6 @@ export default class Storage {
     } catch (err) {
       throw new Error(
         `An error occurred while trying to store ${key} in S3 bucket due to ${err.message}`,
-      );
-    }
-  }
-
-  async getKey(key) {
-    const params = this.buildDefaultParams({
-      Key: key,
-    });
-
-    try {
-      const data = await this.s3.send(new GetObjectCommand(params));
-      const jsonString = await data.Body.transformToString('utf-8');
-      return JSON.parse(jsonString);
-    } catch (err) {
-      throw new Error(
-        `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
-      );
-    }
-  }
-
-  async copyKey(sourceKey, targetKey) {
-    const params = this.buildDefaultParams({
-      CopySource: `${this.bucket}/${sourceKey}`,
-      Key: targetKey,
-    });
-    try {
-      await this.s3.send(new CopyObjectCommand(params));
-      return targetKey;
-    } catch (err) {
-      throw new Error(
-        `An error occurred while trying to copy ${sourceKey} to ${targetKey} in S3 bucket due to ${err.message}`,
       );
     }
   }

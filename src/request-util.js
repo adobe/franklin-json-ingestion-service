@@ -63,7 +63,6 @@ export default class RequestUtil {
       this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;
     }
-    this.selector = this.json.selector;
     this.mode = this.json.mode || 'preview';
 
     if (!VALID_MODES.includes(this.mode)) {

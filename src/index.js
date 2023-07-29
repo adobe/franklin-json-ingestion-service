@@ -14,7 +14,6 @@ import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
-import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
 import InvalidateClient from './invalidate-client.js';
 import { cleanupVariations, extractVariations } from './utils.js';
@@ -34,55 +33,28 @@ async function run(request, context) {
   }
 
   const {
-    action, mode, selector, tenant, relPath, payload, variation, keptVariations,
+    action, mode, tenant, relPath, payload, variation, keptVariations,
   } = requestUtil;
 
   const storage = new Storage(context);
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
   const s3LiveObjectPath = `${tenant}/live/${relPath}`;
-  const selection = selector ? `.${selector}` : '';
   const suffix = variation ? `/variations/${variation}` : '';
+  const selection = '.cfm.gql';
+  const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
 
   if (action === 'store') {
-    if (mode === 'live') {
-      const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-      const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
-      const k = await storage.copyKey(
-        sourceKey,
-        targetKey,
-      );
-      context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
-      if (selector === 'franklin') {
-        // generate the fully hydrated right after
-        await renderFullyHydrated(context, s3LiveObjectPath, variation);
-      }
-      await new InvalidateClient(context).invalidate(`${s3LiveObjectPath}${selection}.json`, variation);
-      return new Response(`${k} stored`);
-    } else {
-      // store to preview
-      const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-      const k = await storage.putKey(
-        storedKey,
-        payload,
-        variation,
-      );
-      context.log.info(`putKey ${storedKey} success`);
-      if (selector === 'franklin') {
-        // generate the fully hydrated right after
-        await renderFullyHydrated(context, s3PreviewObjectPath, variation);
-      }
-      await new InvalidateClient(context).invalidate(`${s3PreviewObjectPath}${selection}.json`, variation);
-      return new Response(`${k} stored`);
-    }
-  } else if (action === 'touch') {
-    const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-    if (selector === 'franklin') {
-      // generate the fully hydrated right after
-      await renderFullyHydrated(context, baseKey, variation);
-    }
-    return new Response(`${baseKey} touched`);
+    // store to preview
+    const storedKey = `${s3ObjectPath}${selection}.json${suffix}`;
+    const k = await storage.putKey(
+      storedKey,
+      payload,
+      variation,
+    );
+    context.log.info(`putKey ${storedKey} success`);
+    await new InvalidateClient(context).invalidate(`${s3ObjectPath}${selection}.json`, variation);
+    return new Response(`${k} stored`);
   } else if (action === 'cleanup') {
-    const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
     const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
     await new InvalidateClient(context).invalidateVariations(
       `${s3ObjectPath}${selection}.json`,
@@ -94,21 +66,12 @@ async function run(request, context) {
       return new Response('no variations found, so nothing to got evicted');
     }
   } else {
-    const removePreview = mode === 'preview';
-    const removeLive = mode === 'live' || mode === 'preview';
     const evictedKeys = [];
-    if (removeLive) {
-      evictedKeys.push(...await storage.evictKeys(s3LiveObjectPath, `${selection}.json`));
-    }
-    if (removePreview) {
-      evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
-    }
-    if (selection) {
-      await new InvalidateClient(context).invalidateAll(
-        evictedKeys,
-        selection,
-      );
-    }
+    evictedKeys.push(...await storage.evictKeys(s3ObjectPath, `${selection}.json`));
+    await new InvalidateClient(context).invalidateAll(
+      evictedKeys,
+      selection,
+    );
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }
 }

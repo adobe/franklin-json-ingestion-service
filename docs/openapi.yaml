@@ -19,9 +19,9 @@ paths:
     post:
       tags:
         - Franklin
-      summary: Store | Evict | Touch json .
+      summary: Store | Evict json .
       description: |
-        This api allow to store | evict | touch a resource stored in S3 bucket.
+        This api allow to store | evict a resource stored in S3 bucket.
       requestBody:
         $ref: '#/components/requestBodies/RequestJSONIngestor'
       responses:
@@ -44,7 +44,6 @@ components:
                 enum:
                   - store
                   - evict
-                  - touch
                   - cleanup
               tenant:
                 type: string
@@ -69,7 +68,7 @@ components:
                   test: some content
               variation:
                 type: string
-                description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.<selector>.json/variations/<variation>
+                description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.cfm.gql.json/variations/<variation>
                 example: var1
               keptVariations:
                 type: array
@@ -77,10 +76,6 @@ components:
                   type: string
                 description: Define the list of variations to kept when performing cleanup action
                 example: [ "var1", "var4" ]
-              selector:
-                type: string
-                description: Optional, the selector information used to store the json i.e <tenant>/<mode><relPath>.<selector>.json
-                example: cfm.gql
             example:
               action: store
               tenant: sample

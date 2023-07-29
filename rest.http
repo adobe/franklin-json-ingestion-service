@@ -1,5 +1,5 @@
 # Store payload in preview
-POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci253 HTTP/1.1
+POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci579 HTTP/1.1
 content-type: application/json;charset=utf-8
 
 {
@@ -7,7 +7,6 @@ content-type: application/json;charset=utf-8
     "tenant": "1ddae356422974932f5f02946a3f2670d782ac7eae55edb32e4b9b65f7d",
     "relPath": "a/b/c",
     "mode": "preview",
-    "selector": "cfm.gql",
     "payload": {
         "data": {
             "id": "test-data-id",
@@ -19,6 +18,18 @@ content-type: application/json;charset=utf-8
 
 ###
 
+# Cleanup variations in preview
+POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci585 HTTP/1.1
+content-type: application/json;charset=utf-8
+
+{
+  "action": "evict",
+  "tenant": "localhost",
+  "relPath": "aem/validation/fragment-h-1",
+  "mode": "preview"
+}
+
+###
 # Evict object in preview
 POST http://localhost:3000/ HTTP/1.1
 content-type: application/json
