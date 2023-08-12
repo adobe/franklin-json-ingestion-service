@@ -44,7 +44,6 @@ components:
                 enum:
                   - store
                   - evict
-                  - cleanup
                   - settings
               tenant:
                 type: string
@@ -71,12 +70,6 @@ components:
                 type: string
                 description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.cfm.gql.json/variations/<variation>
                 example: var1
-              keptVariations:
-                type: array
-                items:
-                  type: string
-                description: Define the list of variations to kept when performing cleanup action
-                example: [ "var1", "var4" ]
             example:
               action: store
               tenant: sample

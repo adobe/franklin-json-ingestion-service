@@ -14,7 +14,7 @@ import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict', 'cleanup', 'settings'];
+const VALID_ACTIONS = ['store', 'evict', 'settings'];
 const VALID_METHODS = ['POST'];
 
 const gunzip = promisify(zlib.gunzip);
@@ -65,7 +65,7 @@ export default class RequestUtil {
     }
 
     this.relPath = this.json.relPath;
-    const checkRelPath = ['store', 'evict', 'cleanup'].includes(this.action);
+    const checkRelPath = ['store', 'evict'].includes(this.action);
     const relPathInvalid = !this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0;
     if (checkRelPath && relPathInvalid) {
       this.errorMessage = 'Invalid parameters relPath value, should not start with /';
@@ -76,13 +76,6 @@ export default class RequestUtil {
     if (!VALID_MODES.includes(this.mode)) {
       this.errorMessage = `Invalid parameters mode value, accept:${VALID_MODES}`;
       return;
-    }
-    if (this.action === 'cleanup') {
-      this.keptVariations = this.json.keptVariations;
-      if (!this.keptVariations) {
-        this.errorMessage = 'Invalid parameter missing keptVariations parameter for cleanup';
-        return;
-      }
     }
     this.variation = this.json.variation;
     this.payload = this.json.payload;

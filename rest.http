@@ -1,5 +1,25 @@
+# Setup Settings
+POST {{endpoint}} HTTP/1.1
+content-type: application/json;charset=utf-8
+
+{
+  "action": "settings",
+  "tenant": "localhost",
+  "payload": {
+    "preview": {
+      "baseURL": "https://author-localhost",
+      "authorization": "Bearer token"
+    },
+    "live": {
+      "baseURL": "https://d278-2a01-e0a-69-61e0-c44f-ece9-8833-34fd.ngrok-free.app"
+    }
+  }
+}
+
+###
+
 # Store payload in preview
-POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci579 HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json;charset=utf-8
 
 {
@@ -19,7 +39,7 @@ content-type: application/json;charset=utf-8
 ###
 
 # Cleanup variations in preview
-POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci585 HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json;charset=utf-8
 
 {
@@ -31,7 +51,7 @@ content-type: application/json;charset=utf-8
 
 ###
 # Evict object in preview
-POST http://localhost:3000/ HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json
 
 {
@@ -44,7 +64,7 @@ content-type: application/json
 ###
 
 # Copy existing preview to live
-POST http://localhost:3000/ HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json
 
 {
@@ -57,7 +77,7 @@ content-type: application/json
 ###
 
 # Evict existing live object
-POST http://localhost:3000/ HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json
 
 {

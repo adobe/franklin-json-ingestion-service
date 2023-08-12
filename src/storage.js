@@ -96,9 +96,9 @@ export default class Storage {
     return objects;
   }
 
-  async evictKeys(key, suffix) {
+  async evictKeys(key) {
     try {
-      const keyWithSuffix = `${key}${suffix}`;
+      const keyWithSuffix = `${key}.cfm.gql.json`;
       const list1 = await this.listKeys(`${key}/`);
       const list2 = await this.listKeys(`${keyWithSuffix}/`);
       const deletedKeys = [

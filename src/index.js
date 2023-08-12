@@ -16,8 +16,12 @@ import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import RequestUtil from './request-util.js';
 import InvalidateClient from './invalidate-client.js';
-import { cleanupVariations, extractVariations, validSettings } from './utils.js';
+import {
+  extractS3ObjectPath,
+  validSettings,
+} from './utils.js';
 import PullingClient from './pulling-client.js';
+import VariationsUtil from './variations-util.js';
 
 /**
  * This is the main function
@@ -29,6 +33,7 @@ import PullingClient from './pulling-client.js';
 const globalContent = {};
 
 async function run(request, context) {
+  const endpoint = request.url;
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
 
@@ -37,15 +42,12 @@ async function run(request, context) {
   }
 
   const {
-    action, mode, tenant, relPath, payload, variation, keptVariations,
+    action, mode, tenant, relPath, payload, variation,
   } = requestUtil;
 
   const storage = new Storage(context);
-  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
-  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   const suffix = variation ? `/variations/${variation}` : '';
-  const selection = '.cfm.gql';
-  const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+  const s3ObjectPath = extractS3ObjectPath(requestUtil);
 
   if (action === 'store') {
     let data = payload;
@@ -67,29 +69,24 @@ async function run(request, context) {
       ).pullContent(relPath, variation);
     }
     if (data) {
-      // store to preview
-      const storedKey = `${s3ObjectPath}${selection}.json${suffix}`;
+      const storedKey = `${s3ObjectPath}.cfm.gql.json${suffix}`;
       const k = await storage.putKey(
         storedKey,
         data,
         variation,
       );
       context.log.info(`putKey ${storedKey} success`);
-      await new InvalidateClient(context).invalidate(`${s3ObjectPath}${selection}.json`, variation);
+      await new InvalidateClient(context).invalidate(`${s3ObjectPath}.cfm.gql.json`, variation);
+      if (!variation) {
+        await new VariationsUtil(
+          context,
+          endpoint,
+          requestUtil,
+        ).process(data, requestUtil);
+      }
       return new Response(`${k} stored`);
     } else {
       return new Response('Empty data, nothing to store', { status: 400 });
-    }
-  } else if (action === 'cleanup') {
-    const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
-    await new InvalidateClient(context).invalidateVariations(
-      `${s3ObjectPath}${selection}.json`,
-      extractVariations(evictedVariationsKeys, selection),
-    );
-    if (evictedVariationsKeys.length > 0) {
-      return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
-    } else {
-      return new Response('no variations found, so nothing to got evicted');
     }
   } else if (action === 'settings') {
     const key = `${tenant}/settings.json`;
@@ -102,10 +99,9 @@ async function run(request, context) {
     }
   } else {
     const evictedKeys = [];
-    evictedKeys.push(...await storage.evictKeys(s3ObjectPath, `${selection}.json`));
+    evictedKeys.push(...await storage.evictKeys(s3ObjectPath));
     await new InvalidateClient(context).invalidateAll(
       evictedKeys,
-      selection,
     );
     return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
   }

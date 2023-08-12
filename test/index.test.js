@@ -47,7 +47,12 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 405);
   });
   it('stores in preview as implicit operation', async () => {
-    mockClient(S3Client);
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -116,7 +121,12 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 400);
   });
   it('stores in preview', async () => {
-    mockClient(S3Client);
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
     const result = await main(
       new Request(
         'https://localhost/',
@@ -143,6 +153,12 @@ describe('Index Tests', () => {
       .get(/\/content\/dam\/a\/b\/c.cfm.gql.json\?ck=.*/)
       .reply(200, responseData);
     const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
+
     setupSettingMock(s3Mock, {
       preview: {
         baseURL: 'http://author-localhost',
@@ -195,7 +211,13 @@ describe('Index Tests', () => {
   });
 
   it('stores in live success', async () => {
-    mockClient(S3Client);
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
+
     const result = await main(
       new Request(
         'https://localhost/',
@@ -425,96 +447,5 @@ describe('Index Tests', () => {
     assert.match(await result.text(), /.*preview.* evicted/);
     assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
-  });
-  describe('cleanup variation', () => {
-    let eventCaptor = [];
-    function eventCaptorMatcher(body) {
-      if (body.event && body.event.variation) {
-        eventCaptor.push(body.event.variation);
-      }
-      return true;
-    }
-    function mockRequest(mode) {
-      return new Request(
-        'https://localhost/',
-        {
-          method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
-          body: JSON.stringify({
-            mode,
-            action: 'cleanup',
-            tenant: 'local',
-            relPath: 'a/b/c',
-            keptVariations: ['var1', 'var2'],
-          }),
-        },
-      );
-    }
-    it('nothing to evict', async () => {
-      nock('http://localhost')
-        .post('/endpoint', eventCaptorMatcher)
-        .times(2)
-        .reply(200, {});
-      const s3Mock = mockClient(S3Client);
-      s3Mock.on(ListObjectsV2Command)
-        .resolvesOnce({
-          IsTruncated: false,
-          Contents: [],
-        });
-      const resultPreview = await main(
-        mockRequest('preview'),
-        {},
-      );
-      assert.strictEqual(await resultPreview.text(), 'no variations found, so nothing to got evicted');
-      assert.strictEqual(await resultPreview.status, 200);
-      assert.strictEqual(JSON.stringify(eventCaptor), JSON.stringify([]));
-    });
-    it('mode preview', async () => {
-      nock('http://localhost')
-        .post('/endpoint', eventCaptorMatcher)
-        .times(2)
-        .reply(200, {});
-      const s3Mock = mockClient(S3Client);
-      s3Mock.on(ListObjectsV2Command)
-        .resolvesOnce({
-          IsTruncated: false,
-          Contents: [
-            { Key: 'local/preview/a/b/c.cfm.gql.json/variations/var1' },
-            { Key: 'local/preview/a/b/c.cfm.gql.json/variations/var2' },
-            { Key: 'local/preview/a/b/c.cfm.gql.json/variations/max' },
-          ],
-        });
-      const resultPreview = await main(
-        mockRequest('preview'),
-        {},
-      );
-      assert.strictEqual(await resultPreview.text(), 'local/preview/a/b/c.cfm.gql.json/variations/max evicted');
-      assert.strictEqual(await resultPreview.status, 200);
-      assert.strictEqual(JSON.stringify(eventCaptor), JSON.stringify(['max']));
-    });
-    it('mode live', async () => {
-      nock('http://localhost')
-        .post('/endpoint', eventCaptorMatcher)
-        .times(2)
-        .reply(200, {});
-      const s3Mock = mockClient(S3Client);
-      s3Mock.on(ListObjectsV2Command)
-        .resolvesOnce({
-          IsTruncated: false,
-          Contents: [
-            { Key: 'local/live/a/b/c.cfm.gql.json/variations/var1' },
-            { Key: 'local/live/a/b/c.cfm.gql.json/variations/var2' },
-            { Key: 'local/live/a/b/c.cfm.gql.json/variations/max' },
-          ],
-        });
-      eventCaptor = [];
-      const resultLive = await main(
-        mockRequest('live'),
-        {},
-      );
-      assert.strictEqual(await resultLive.text(), 'local/live/a/b/c.cfm.gql.json/variations/max evicted');
-      assert.strictEqual(await resultLive.status, 200);
-      assert.strictEqual(JSON.stringify(eventCaptor), JSON.stringify(['max']));
-    });
   });
 });
