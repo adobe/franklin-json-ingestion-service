@@ -39,12 +39,13 @@ components:
             properties:
               action:
                 type: string
-                description: The command key to store | evict | touch | cleanup  the given relPath under specific tenant and mode.
+                description: The command key to store | evict | cleanup | settings the given relPath under specific tenant and mode.
                 example: store
                 enum:
                   - store
                   - evict
                   - cleanup
+                  - settings
               tenant:
                 type: string
                 description: Define where it get stored under S3 main folder. i.e <tenant>

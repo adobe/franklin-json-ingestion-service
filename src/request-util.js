@@ -14,7 +14,7 @@ import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict', 'touch', 'cleanup'];
+const VALID_ACTIONS = ['store', 'evict', 'cleanup', 'settings'];
 const VALID_METHODS = ['POST'];
 
 const gunzip = promisify(zlib.gunzip);
@@ -52,6 +52,12 @@ export default class RequestUtil {
       return;
     }
 
+    this.action = this.json.action || 'store';
+    if (!VALID_ACTIONS.includes(this.action)) {
+      this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
+      return;
+    }
+
     this.tenant = this.json.tenant;
     if (!this.tenant || !this.tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
       this.errorMessage = 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]';
@@ -59,7 +65,9 @@ export default class RequestUtil {
     }
 
     this.relPath = this.json.relPath;
-    if (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0) {
+    const checkRelPath = ['store', 'evict', 'cleanup'].includes(this.action);
+    const relPathInvalid = !this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0;
+    if (checkRelPath && relPathInvalid) {
       this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;
     }
@@ -67,12 +75,6 @@ export default class RequestUtil {
 
     if (!VALID_MODES.includes(this.mode)) {
       this.errorMessage = `Invalid parameters mode value, accept:${VALID_MODES}`;
-      return;
-    }
-
-    this.action = this.json.action || 'store';
-    if (!VALID_ACTIONS.includes(this.action)) {
-      this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
       return;
     }
     if (this.action === 'cleanup') {

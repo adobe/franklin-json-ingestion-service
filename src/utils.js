@@ -119,3 +119,9 @@ export function extractVariations(s3Keys, selection) {
     }
   }).filter((value) => value != null);
 }
+
+export function validSettings(payload) {
+  return payload && payload.live && payload.preview
+      && payload.live.baseURL.match(/https?:\/\/[^/]+/)
+      && payload.preview.baseURL.match(/https?:\/\/[^/]+/);
+}

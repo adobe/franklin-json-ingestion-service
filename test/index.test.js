@@ -13,11 +13,29 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { Request } from '@adobe/fetch';
-import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import nock from 'nock';
 import { main } from '../src/index.js';
 import { APPLICATION_JSON } from '../src/constants.js';
+
+function setupSettingMock(s3Mock, settings) {
+  const source = JSON.stringify(settings);
+  const key = 'local/settings.json';
+  s3Mock
+    .on(GetObjectCommand, {
+      Key: key,
+    })
+    .resolves({
+      Body: { transformToString: () => source },
+    });
+}
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
@@ -50,6 +68,53 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
     assert.strictEqual(await result.status, 200);
   });
+  it('stores empty data no settings', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'Please call settings action to setup pulling client');
+    assert.strictEqual(await result.status, 400);
+  });
+
+  it('stores empty data invalid', async () => {
+    const s3Mock = mockClient(S3Client);
+    setupSettingMock(s3Mock, {
+      preview: {
+        baseURL: 'http://author-localhost',
+        authorization: 'Bearer token',
+      },
+      live: {
+        baseURL: 'http://publish-localhost',
+      },
+    });
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            tenant: 'local',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'Empty data, nothing to store');
+    assert.strictEqual(await result.status, 400);
+  });
   it('stores in preview', async () => {
     mockClient(S3Client);
     const result = await main(
@@ -70,6 +135,39 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(await result.text(), 'local/preview/a/b/c.cfm.gql.json stored');
+    assert.strictEqual(await result.status, 200);
+  });
+  it('store call pullContent with no payload', async () => {
+    const responseData = { data: { test: 'value' } };
+    nock('http://publish-localhost')
+      .get(/\/content\/dam\/a\/b\/c.cfm.gql.json\?ck=.*/)
+      .reply(200, responseData);
+    const s3Mock = mockClient(S3Client);
+    setupSettingMock(s3Mock, {
+      preview: {
+        baseURL: 'http://author-localhost',
+        authorization: 'Bearer token',
+      },
+      live: {
+        baseURL: 'http://publish-localhost',
+      },
+    });
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            tenant: 'local',
+            mode: 'live',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'local/live/a/b/c.cfm.gql.json stored');
     assert.strictEqual(await result.status, 200);
   });
   it('stores variation', async () => {
@@ -119,6 +217,56 @@ describe('Index Tests', () => {
     );
     assert.strictEqual(await result.text(), 'local/live/a/b/c.cfm.gql.json stored');
     assert.strictEqual(await result.status, 200);
+  });
+  it('setup settings success', async () => {
+    const s3Mock = mockClient(S3Client);
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            action: 'settings',
+            tenant: 'local',
+            relPath: 'settings.json',
+            payload: {
+              preview: {
+                baseURL: 'http://author-localhost',
+              },
+              live: {
+                baseURL: 'http://publish-localhost',
+              },
+            },
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
+    assert.strictEqual(await result.text(), 'settings stored under local/settings.json');
+    assert.strictEqual(await result.status, 200);
+  });
+  it('setup settings invalid', async () => {
+    const result = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            action: 'settings',
+            tenant: 'local',
+            relPath: 'settings.json',
+            payload: {
+            },
+          }),
+        },
+      ),
+      {},
+    );
+    assert.strictEqual(await result.text(), 'Invalid settings value');
+    assert.strictEqual(await result.status, 400);
   });
   it('evicts in live remove from live only', async () => {
     const s3Mock = mockClient(S3Client);

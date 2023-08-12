@@ -61,6 +61,7 @@ describe('RequestUtil Tests', () => {
           headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
+            action: 'store',
           }),
         },
       ),
@@ -100,6 +101,7 @@ describe('RequestUtil Tests', () => {
           headers: { 'content-type': APPLICATION_JSON },
           body: JSON.stringify({
             tenant: 'local',
+            action: 'store',
             relPath: '/a/b/c',
           }),
         },
@@ -121,6 +123,7 @@ describe('RequestUtil Tests', () => {
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
+            action: 'store',
             mode: 'any',
           }),
         },
@@ -152,7 +155,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters action value, accept:store,evict,touch,cleanup');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters action value, accept:store,evict,cleanup,settings');
   });
   it('fails on invalid tenant value', async () => {
     const reqUtil = new RequestUtil(

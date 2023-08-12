@@ -16,7 +16,8 @@ import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import RequestUtil from './request-util.js';
 import InvalidateClient from './invalidate-client.js';
-import { cleanupVariations, extractVariations } from './utils.js';
+import { cleanupVariations, extractVariations, validSettings } from './utils.js';
+import PullingClient from './pulling-client.js';
 
 /**
  * This is the main function
@@ -24,6 +25,9 @@ import { cleanupVariations, extractVariations } from './utils.js';
  * @param {UniversalContext} context the context of the universal serverless function
  * @returns {Response} a response
  */
+
+const globalContent = {};
+
 async function run(request, context) {
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
@@ -44,16 +48,38 @@ async function run(request, context) {
   const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
 
   if (action === 'store') {
-    // store to preview
-    const storedKey = `${s3ObjectPath}${selection}.json${suffix}`;
-    const k = await storage.putKey(
-      storedKey,
-      payload,
-      variation,
-    );
-    context.log.info(`putKey ${storedKey} success`);
-    await new InvalidateClient(context).invalidate(`${s3ObjectPath}${selection}.json`, variation);
-    return new Response(`${k} stored`);
+    let data = payload;
+    if (!data) {
+      // init globalContext for given tenant
+      if (!globalContent[tenant]) {
+        try {
+          globalContent[tenant] = await storage.getKey(`${tenant}/settings.json`);
+        } catch (e) {
+          context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
+          return new Response('Please call settings action to setup pulling client', { status: 400 });
+        }
+      }
+      const settings = globalContent[tenant];
+      data = await new PullingClient(
+        context,
+        settings[mode].baseURL,
+        settings[mode].authorization,
+      ).pullContent(relPath, variation);
+    }
+    if (data) {
+      // store to preview
+      const storedKey = `${s3ObjectPath}${selection}.json${suffix}`;
+      const k = await storage.putKey(
+        storedKey,
+        data,
+        variation,
+      );
+      context.log.info(`putKey ${storedKey} success`);
+      await new InvalidateClient(context).invalidate(`${s3ObjectPath}${selection}.json`, variation);
+      return new Response(`${k} stored`);
+    } else {
+      return new Response('Empty data, nothing to store', { status: 400 });
+    }
   } else if (action === 'cleanup') {
     const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
     await new InvalidateClient(context).invalidateVariations(
@@ -64,6 +90,15 @@ async function run(request, context) {
       return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
     } else {
       return new Response('no variations found, so nothing to got evicted');
+    }
+  } else if (action === 'settings') {
+    const key = `${tenant}/settings.json`;
+    if (payload && validSettings(payload)) {
+      await storage.putKey(key, payload);
+      globalContent[tenant] = payload;
+      return new Response(`settings stored under ${key}`);
+    } else {
+      return new Response('Invalid settings value', { status: 400 });
     }
   } else {
     const evictedKeys = [];

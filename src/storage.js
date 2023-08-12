@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import {
-  ListObjectsV2Command,
+  ListObjectsV2Command, GetObjectCommand,
   PutObjectCommand,
   S3Client, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
@@ -45,10 +45,13 @@ export default class Storage {
       Body: JSON.stringify(payload),
       Key: key,
       ContentType: 'application/json;charset=utf-8',
-      Metadata: {
-        variation,
-      },
     });
+
+    if (variation) {
+      params.Metadata = {
+        variation,
+      };
+    }
 
     try {
       await this.s3.send(new PutObjectCommand(params));
@@ -56,6 +59,22 @@ export default class Storage {
     } catch (err) {
       throw new Error(
         `An error occurred while trying to store ${key} in S3 bucket due to ${err.message}`,
+      );
+    }
+  }
+
+  async getKey(key) {
+    const params = this.buildDefaultParams({
+      Key: key,
+    });
+
+    try {
+      const data = await this.s3.send(new GetObjectCommand(params));
+      const jsonString = await data.Body.transformToString('utf-8');
+      return JSON.parse(jsonString);
+    } catch (err) {
+      throw new Error(
+        `An error occurred while trying to read ${key} in S3 bucket due to ${err.message} after several attempts`,
       );
     }
   }
