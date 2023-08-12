@@ -13,8 +13,8 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import {
-    S3Client,
-    ListObjectsV2Command, DeleteObjectsCommand,
+  S3Client,
+  ListObjectsV2Command, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import nock from 'nock';
@@ -23,21 +23,21 @@ import VariationsUtil from '../src/variations-util.js';
 
 describe('Variations Utils Tests', () => {
   it('call store on collected variations', async () => {
-  nock('http://awslocalhost')
+    nock('http://awslocalhost')
       .post('/endpoint', {
-          tenant: 'localhost',
-          action: 'store',
-          mode: 'preview',
-          variation: 'var2',
-          relPath: 'a/b/c'
+        tenant: 'localhost',
+        action: 'store',
+        mode: 'preview',
+        variation: 'var2',
+        relPath: 'a/b/c',
       })
       .reply(200, {})
       .post('/endpoint', {
-          tenant: 'localhost',
-          action: 'store',
-          mode: 'preview',
-          variation: 'var1',
-          relPath: 'a/b/c'
+        tenant: 'localhost',
+        action: 'store',
+        mode: 'preview',
+        variation: 'var1',
+        relPath: 'a/b/c',
       })
       .reply(200, {});
 
@@ -46,9 +46,9 @@ describe('Variations Utils Tests', () => {
       .resolvesOnce({
         IsTruncated: false,
         Contents: [
-            { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var1' },
-            { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var2' },
-            { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var3' },
+          { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var1' },
+          { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var2' },
+          { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var3' },
         ],
       });
     const storage = new Storage();
@@ -65,6 +65,6 @@ describe('Variations Utils Tests', () => {
     await varUtil.process({
       _variations: ['var1', 'var2'],
     });
-  assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
+    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
   });
 });
