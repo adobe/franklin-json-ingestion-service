@@ -51,7 +51,6 @@ describe('Variations Utils Tests', () => {
           { Key: 'localhost/preview/a/b/c.cfm.gql.json/variations/var3' },
         ],
       });
-    const storage = new Storage();
     const varUtil = new VariationsUtil(
       { log: console },
       'http://awslocalhost/endpoint',
@@ -60,11 +59,32 @@ describe('Variations Utils Tests', () => {
         mode: 'preview',
         relPath: 'a/b/c',
       },
-      storage,
+      new Storage(),
     );
     await varUtil.process({
       _variations: ['var1', 'var2'],
     });
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
+  });
+  it('call store on collected variations failing endpoint', async () => {
+    const s3Mock = mockClient(S3Client);
+    s3Mock.on(ListObjectsV2Command)
+      .resolvesOnce({
+        IsTruncated: false,
+        Contents: [],
+      });
+    const varUtil = new VariationsUtil(
+      null,
+      'http://awslocalhost/endpoint',
+      {
+        tenant: 'localhost',
+        mode: 'preview',
+        relPath: 'a/b/c',
+      },
+      new Storage(),
+    );
+    await varUtil.process({
+      _variations: ['var1'],
+    });
   });
 });
