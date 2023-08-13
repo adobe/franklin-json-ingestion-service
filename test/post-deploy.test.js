@@ -52,8 +52,8 @@ createTargets().forEach((target) => {
           tenant: 'aws',
           action: 'store',
           relPath: 'a/b/c',
-          mode: 'live'
-        }
+          mode: 'live',
+        },
       });
       assert.strictEqual(res.status, 405);
     }).timeout(50000);
