@@ -33,7 +33,7 @@ import VariationsUtil from './variations-util.js';
 const globalContent = {};
 
 async function run(request, context) {
-  const endpoint = request.url;
+  const endpoint = process.env.SERVER_ENDPOINT_URL || request.url;
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
 

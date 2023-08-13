@@ -19,7 +19,23 @@ import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
 import Storage from '../src/storage.js';
 
+const initialEnv = Object.assign({}, process.env);
 describe('Storage Tests', () => {
+  after(() => {
+    process.env = initialEnv;
+  });
+  it('doesnt uses forcePathStyle for non local setup', async () => {
+    process.env.AWS_ENDPOINT_URL = 'http://aws-host:9000';
+    const s3Mock = mockClient(S3Client);
+    const result = new Storage();
+    assert.strictEqual(result.s3.config.forcePathStyle, false);
+  });
+  it('uses forcePathStyle for localhost setup', async () => {
+    process.env.AWS_ENDPOINT_URL = 'http://localhost:9000';
+    const s3Mock = mockClient(S3Client);
+    const result = new Storage();
+    assert.strictEqual(result.s3.config.forcePathStyle, true);
+  });
   it('putKey call PutObjectCommand one time', async () => {
     const s3Mock = mockClient(S3Client);
     const key = 'local/preview/a/b/c.json';

@@ -53,7 +53,7 @@ export default class VariationsUtil {
         },
       };
       fetch(this.baseURL, options).catch((err) => {
-        contextObj.log.error(`Error while doing call to store variation: ${variation} due to ${err.message}`);
+        contextObj.log.error(`Error while doing call to store variation: ${variation} due to ${err.message} for ${this.baseURL}`);
       });
     });
   }

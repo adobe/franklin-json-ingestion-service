@@ -1,0 +1,9 @@
+{
+  "preview": {
+    "baseURL": "http://localhost:4502",
+    "authorization": "Basic YWRtaW46YWRtaW4="
+  },
+  "live": {
+    "baseURL": "http://localhost:4503"
+  }
+}

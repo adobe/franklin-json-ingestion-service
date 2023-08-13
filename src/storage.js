@@ -21,8 +21,11 @@ export default class Storage {
   constructor(context) {
     this.context = context || { log: console };
     const s3Config = {
-      endpoint: process.env.AWS_ENDPOINT_URL || undefined,
+      endpoint: process.env.AWS_ENDPOINT_URL || undefined
     };
+    if (s3Config.endpoint && s3Config.endpoint.indexOf("//localhost:") > 0) {
+      s3Config.forcePathStyle = true;
+    }
     this.s3 = new S3Client(s3Config);
     this.bucket = process.env.AWS_BUCKET || DEFAULT_BUCKET;
     this.context.log.info(`Using Bucket=${this.bucket}`);

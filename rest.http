@@ -7,11 +7,11 @@ content-type: application/json;charset=utf-8
   "tenant": "localhost",
   "payload": {
     "preview": {
-      "baseURL": "https://author-localhost",
-      "authorization": "Bearer token"
+      "baseURL": "https://2d56-92-184-124-150.ngrok-free.app",
+      "authorization": "Basic ZnJhbmtsaW4taW5nZXN0b3I6MTIzNA=="
     },
     "live": {
-      "baseURL": "https://d278-2a01-e0a-69-61e0-c44f-ece9-8833-34fd.ngrok-free.app"
+      "baseURL": "https://29fe-92-184-124-150.ngrok-free.app"
     }
   }
 }

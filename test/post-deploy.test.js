@@ -44,5 +44,18 @@ createTargets().forEach((target) => {
       const res = await fetch(`${target.host()}${target.urlPath()}`);
       assert.strictEqual(res.status, 405);
     }).timeout(50000);
+
+    it('store sample', async () => {
+      const res = await fetch(`${target.host()}${target.urlPath()}`, {
+        method: 'POST',
+        body: {
+          tenant: 'aws',
+          action: 'store',
+          relPath: 'a/b/c',
+          mode: 'live'
+        }
+      });
+      assert.strictEqual(res.status, 405);
+    }).timeout(50000);
   });
 });
