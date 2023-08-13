@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "nodemon",
+    "integration": "node ./test/dev/server.mjs",
     "test": "c8 mocha  -i -g 'Post-Deploy'",
     "test-postdeploy": "mocha -g 'Post-Deploy'",
     "lint": "eslint .",
