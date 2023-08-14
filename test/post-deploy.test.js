@@ -45,17 +45,17 @@ createTargets().forEach((target) => {
       assert.strictEqual(res.status, 405);
     }).timeout(50000);
 
-    it('store sample', async () => {
+    it('store sample in preview', async () => {
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
         body: {
-          tenant: 'aws',
+          tenant: 'localhost',
           action: 'store',
-          relPath: 'a/b/c',
-          mode: 'live',
+          relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
+          mode: 'preview',
         },
       });
-      assert.strictEqual(res.status, 405);
+      assert.strictEqual(res.status, 200);
     }).timeout(50000);
   });
 });
