@@ -53,9 +53,11 @@ export default class VariationsUtil {
           variation,
         },
       };
+      contextObj.log.info('invoking lambda for variation ', variation);
       await fetch(this.baseURL, options).catch((err) => {
         contextObj.log.error(`Error while doing call to store variation: ${variation} due to ${err.message} for ${this.baseURL}`);
       });
+      contextObj.log.info('done invoking lambda for variation ', variation);
     });
   }
 }
