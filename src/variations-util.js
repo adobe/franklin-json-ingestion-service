@@ -41,6 +41,7 @@ export default class VariationsUtil {
     // then store re-variations existing ones
     const contextObj = this.context;
     await processQueue(cloneObject(variations), async (variation) => {
+      contextObj.log.info(`Processing variation: ${variation} for ${this.baseURL}`);
       const options = {
         method: 'POST',
         headers: { 'content-type': APPLICATION_JSON },

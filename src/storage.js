@@ -60,6 +60,7 @@ export default class Storage {
       await this.s3.send(new PutObjectCommand(params));
       return key;
     } catch (err) {
+      this.context.log.error(`An error occurred while trying to store ${key} in S3 bucket due to ${err.message}`);
       throw new Error(
         `An error occurred while trying to store ${key} in S3 bucket due to ${err.message}`,
       );

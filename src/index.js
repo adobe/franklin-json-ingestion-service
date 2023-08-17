@@ -45,6 +45,7 @@ async function run(request, context) {
     action, mode, tenant, relPath, payload, variation,
   } = requestUtil;
 
+  context.log.info('lambda invoked for variation', variation);
   const storage = new Storage(context);
   const suffix = variation ? `/variations/${variation}` : '';
   const s3ObjectPath = extractS3ObjectPath(requestUtil);
@@ -62,6 +63,7 @@ async function run(request, context) {
         }
       }
       const settings = globalContent[tenant];
+      context.log.info('pulling data for variation', variation);
       data = await new PullingClient(
         context,
         settings[mode].baseURL,
