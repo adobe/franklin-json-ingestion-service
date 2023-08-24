@@ -114,6 +114,7 @@ async function run(request, context) {
 async function fast(req, context) {
   const fastBounceId = context.invocation.bounceId;
   context.log.info(`fast request ${fastBounceId} started`);
+  context.log.info('bouncing request', req.url);
   return new Response(`I am working on it. Use ${context.invocation.bounceId} to track the status.`);
 }
 /* c8 ignore stop */
