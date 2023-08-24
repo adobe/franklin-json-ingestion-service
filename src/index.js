@@ -34,8 +34,6 @@ import VariationsUtil from './variations-util.js';
 const globalContent = {};
 
 async function run(request, context) {
-  const slowBounceId = context.invocation.bounceId;
-  context.log.info(`run request ${slowBounceId} started`);
   const endpoint = process.env.SERVER_ENDPOINT_URL || request.url;
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
