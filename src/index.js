@@ -34,6 +34,8 @@ import VariationsUtil from './variations-util.js';
 const globalContent = {};
 
 async function run(request, context) {
+  const slowBounceId = context.invocation.bounceId;
+  context.log.info(`run request ${slowBounceId} started`);
   const endpoint = process.env.SERVER_ENDPOINT_URL || request.url;
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
@@ -110,11 +112,13 @@ async function run(request, context) {
 
 /* c8 ignore start */
 async function fast(req, context) {
+  const fastBounceId = context.invocation.bounceId;
+  context.log.info(`fast request ${fastBounceId} started`);
   return new Response(`I am working on it. Use ${context.invocation.bounceId} to track the status.`);
 }
 /* c8 ignore stop */
 
 export const main = wrap(run)
-  .with(bounce, { responder: fast })
+  .with(bounce, { responder: fast, timeout: 20000 })
   .with(helixStatus)
   .with(logger);
