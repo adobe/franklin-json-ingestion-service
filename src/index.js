@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import wrap from '@adobe/helix-shared-wrap';
+import bounce from '@adobe/helix-shared-bounce';
 import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
@@ -107,6 +108,13 @@ async function run(request, context) {
   }
 }
 
+/* c8 ignore start */
+async function fast(req, context) {
+  return new Response(`I am working on it. Use ${context.invocation.bounceId} to track the status.`);
+}
+/* c8 ignore stop */
+
 export const main = wrap(run)
+  .with(bounce, { responder: fast })
   .with(helixStatus)
   .with(logger);

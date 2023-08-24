@@ -67,6 +67,15 @@ describe('Variations Utils Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
   });
   it('call store on collected variations failing endpoint', async () => {
+    nock('http://awslocalhost')
+      .post('/endpoint', {
+        tenant: 'localhost',
+        action: 'store',
+        mode: 'preview',
+        variation: 'var1',
+        relPath: 'a/b/c',
+      })
+      .reply(500, {});
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
@@ -83,8 +92,13 @@ describe('Variations Utils Tests', () => {
       },
       new Storage(),
     );
-    await varUtil.process({
-      _variations: ['var1'],
+    await assert.rejects(async () => {
+      await varUtil.process({
+        _variations: ['var1'],
+      });
+    }, {
+      name: 'Error',
+      message: 'Error while doing call to store variation: var1 due to  for http://awslocalhost/endpoint',
     });
   });
 });

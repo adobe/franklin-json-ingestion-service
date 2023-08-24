@@ -21,7 +21,7 @@ export default class Storage {
   constructor(context) {
     this.context = context || { log: console };
     const s3Config = {
-      endpoint: process.env.AWS_ENDPOINT_URL || undefined,
+      endpoint: process.env.AWS_ENDPOINT_URL,
     };
     if (s3Config.endpoint && s3Config.endpoint.indexOf('//localhost:') > 0) {
       s3Config.forcePathStyle = true;
