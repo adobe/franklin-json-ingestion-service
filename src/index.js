@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import wrap from '@adobe/helix-shared-wrap';
-import bounce from '@adobe/helix-shared-bounce';
+// import bounce from '@adobe/helix-shared-bounce';
 import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
@@ -111,15 +111,16 @@ async function run(request, context) {
 }
 
 /* c8 ignore start */
-async function fast(req, context) {
+/* async function fast(req, context) {
   const fastBounceId = context.invocation.bounceId;
   context.log.info(`fast request ${fastBounceId} started`);
   context.log.info('bouncing request', req.url);
-  return new Response(`I am working on it. Use ${context.invocation.bounceId} to track the status.`);
-}
+  return new Response(`I am working on it.
+  Use ${context.invocation.bounceId} to track the status.`);
+} */
 /* c8 ignore stop */
 
 export const main = wrap(run)
-  .with(bounce, { responder: fast, timeout: 20000 })
+  // .with(bounce, { responder: fast, timeout: 20000 })
   .with(helixStatus)
   .with(logger);
