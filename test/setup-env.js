@@ -13,3 +13,4 @@
 console.log('Forcing HTTP/1.1 for @adobe/fetch');
 process.env.HELIX_FETCH_FORCE_HTTP1 = 'true';
 process.env.HELIX_DEBOUNCE = 'true';
+process.env.SLACK_URL = 'http://slackcloudservice';

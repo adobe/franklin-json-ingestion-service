@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 import wrap from '@adobe/helix-shared-wrap';
-// import bounce from '@adobe/helix-shared-bounce';
 import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
@@ -18,7 +17,7 @@ import Storage from './storage.js';
 import RequestUtil from './request-util.js';
 import InvalidateClient from './invalidate-client.js';
 import {
-  extractS3ObjectPath,
+  extractS3ObjectPath, sendSlackMessage, setupSlack,
   validSettings,
 } from './utils.js';
 import PullingClient from './pulling-client.js';
@@ -85,6 +84,7 @@ async function run(request, context) {
           requestUtil,
         ).process(data, requestUtil);
       }
+      await sendSlackMessage(globalContent[tenant], `Content for ${relPath} stored in ${mode} mode`);
       return new Response(`${k} stored`);
     } else {
       return new Response('Empty data, nothing to store', { status: 400 });
@@ -94,6 +94,7 @@ async function run(request, context) {
     if (payload && validSettings(payload)) {
       await storage.putKey(key, payload);
       globalContent[tenant] = payload;
+      await setupSlack(payload);
       return new Response(`settings stored under ${key}`);
     } else {
       return new Response('Invalid settings value', { status: 400 });
@@ -108,17 +109,6 @@ async function run(request, context) {
   }
 }
 
-/* c8 ignore start */
-/* async function fast(req, context) {
-  const fastBounceId = context.invocation.bounceId;
-  context.log.info(`fast request ${fastBounceId} started`);
-  context.log.info('bouncing request', req.url);
-  return new Response(`I am working on it.
-  Use ${context.invocation.bounceId} to track the status.`);
-} */
-/* c8 ignore stop */
-
 export const main = wrap(run)
-  // .with(bounce, { responder: fast, timeout: 20000 })
   .with(helixStatus)
   .with(logger);

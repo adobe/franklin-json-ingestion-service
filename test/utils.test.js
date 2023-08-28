@@ -11,13 +11,15 @@
  */
 /* eslint-env mocha */
 import assert from 'assert';
+import nock from 'nock';
 import {
   collectReferences,
   createReferenceToObjectMapping,
   extractCFReferencesProperties,
   replaceRefsWithObject,
   filterVariationsKeys,
-  extractVariations, extractVariation, extractRootKey, collectVariations,
+  extractVariations, extractVariation, extractRootKey, collectVariations, sendSlackMessage,
+  setupSlack,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -228,5 +230,41 @@ describe('Utils Tests', () => {
       },
     })).sort();
     assert.deepStrictEqual(variations, ['var1', 'var2', 'var3', 'var4', 'var5']);
+  });
+  it('sendSlackMessage', async () => {
+    nock('http://slackcloudservice', {
+      reqheaders: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer dummyToken',
+      },
+    }).post('/api/chat.postMessage', (requestBody) => {
+      assert.strictEqual(requestBody.channel, 'dummyChannelId');
+      assert.strictEqual(requestBody.blocks[0].text.text, 'dummyMessage');
+      return true;
+    }).reply(200, { ok: true });
+    await sendSlackMessage({
+      slackChannelId: 'dummyChannelId',
+      slackToken: 'dummyToken',
+    }, 'dummyMessage');
+  });
+  describe('setupSlack', () => {
+    it('success', async () => {
+      nock('http://slackcloudservice', {
+        reqheaders: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer dummyToken',
+        },
+      }).post('/api/conversations.join', (requestBody) => {
+        assert.strictEqual(requestBody.channel, 'dummyChannelId');
+        return true;
+      }).reply(200, { ok: true });
+      await setupSlack({
+        slackChannelId: 'dummyChannelId',
+        slackToken: 'dummyToken',
+      });
+    });
+    it('undefined settings', async () => {
+      await setupSlack();
+    });
   });
 });

@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import SlackClient from './slack-client.js';
+
 const SUFFIX = '.cfm.gql.json';
+/* c8 ignore next */
+const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';
 
 export function cloneObject(object) {
   return JSON.parse(JSON.stringify(object));
@@ -109,6 +113,26 @@ export function extractVariation(key) {
   const pattern = `${SUFFIX}/variations/`;
   const idx = key.indexOf(pattern);
   return idx >= 0 ? `${key.substring(idx + pattern.length)}` : null;
+}
+
+export async function sendSlackMessage(options, message) {
+  const settings = options || {};
+  const { slackToken } = settings;
+  const { slackChannelId } = settings;
+  if (slackToken && slackChannelId) {
+    await new SlackClient(SLACK_URL, slackToken)
+      .postMessage(slackChannelId, message);
+  }
+}
+
+export async function setupSlack(options) {
+  const settings = options || {};
+  const { slackToken } = settings;
+  const { slackChannelId } = settings;
+  if (slackToken && slackChannelId) {
+    await new SlackClient(SLACK_URL, slackToken)
+      .joinChannel(slackChannelId);
+  }
 }
 
 export function extractVariations(s3Keys) {
