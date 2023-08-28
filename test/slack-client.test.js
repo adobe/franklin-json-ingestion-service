@@ -94,10 +94,6 @@ describe('SlackClient Tests', () => {
       await new SlackClient('http://slackcloudservice', 'dummyToken')
         .postMessage('dummyChannelId', 'dummyMessage');
     });
-    /* it('success on slack.com', async () => {
-      await new SlackClient('https://slack.com', 'xoxb-6470950466-4707359141873-YdwEHkURptQEWX5L2soLFET0')
-        .postMessage('C05PHRCNLH1', 'Hello');
-    }); */
     it('fail on 500', async () => {
       nock('http://slackcloudservice')
         .post('/api/chat.postMessage')
