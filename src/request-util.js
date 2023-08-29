@@ -27,6 +27,17 @@ export default class RequestUtil {
     this.errorStatusCode = 400;
   }
 
+  toMessage() {
+    const message = {
+      action: this.action,
+      mode: this.mode,
+      tenant: this.tenant,
+      relPath: this.relPath,
+      variation: this.variation,
+    };
+    return message;
+  }
+
   async validate() {
     if (!VALID_METHODS.includes(this.request.method)) {
       this.errorMessage = 'Currently only POST | GET is implemented';

@@ -173,8 +173,8 @@ export function collectVariations(data) {
   return variations;
 }
 
-export function extractS3ObjectPath(requestUtil) {
-  const { tenant, mode, relPath } = requestUtil;
+export function extractS3ObjectPath(obj) {
+  const { tenant, mode, relPath } = obj;
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
   const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   return mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;

@@ -27,7 +27,11 @@ export default class PullingClient {
       if (this.authorization) {
         headers.Authorization = this.authorization;
       }
+      const startTime = Date.now();
+      this.context.log.info(`pulling content from ${url} initiated`);
       const response = await fetch(url, { method: 'GET', headers });
+      const elapsedTime = Date.now() - startTime;
+      this.context.log.info(`pulling content from ${url} completed in ${elapsedTime}ms`);
       if (response.status === 200) {
         this.context.log.info(`pulling content from ${url} success`);
         content = await response.json();
