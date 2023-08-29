@@ -19,7 +19,6 @@ import {
   replaceRefsWithObject,
   filterVariationsKeys,
   extractVariations, extractVariation, extractRootKey, collectVariations, sendSlackMessage,
-  setupSlack,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -246,25 +245,5 @@ describe('Utils Tests', () => {
       slackChannelId: 'dummyChannelId',
       slackToken: 'dummyToken',
     }, 'dummyMessage');
-  });
-  describe('setupSlack', () => {
-    it('success', async () => {
-      nock('http://slackcloudservice', {
-        reqheaders: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer dummyToken',
-        },
-      }).post('/api/conversations.join', (requestBody) => {
-        assert.strictEqual(requestBody.channel, 'dummyChannelId');
-        return true;
-      }).reply(200, { ok: true });
-      await setupSlack({
-        slackChannelId: 'dummyChannelId',
-        slackToken: 'dummyToken',
-      });
-    });
-    it('undefined settings', async () => {
-      await setupSlack();
-    });
   });
 });

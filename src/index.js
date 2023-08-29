@@ -10,21 +10,16 @@
  * governing permissions and limitations under the License.
  */
 import wrap from '@adobe/helix-shared-wrap';
-import processQueue from '@adobe/helix-shared-process-queue';
 import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import RequestUtil from './request-util.js';
-import InvalidateClient from './invalidate-client.js';
 import {
-  cloneObject,
-  extractS3ObjectPath, sendSlackMessage, setupSlack,
+  cloneObject, processSequence,
   validSettings,
 } from './utils.js';
-import PullingClient from './pulling-client.js';
-import VariationsUtil from './variations-util.js';
-import { sendMessage } from './sqs-util.js';
+import { sendMessage, processMessage } from './sqs-util.js';
 
 /**
  * This is the main function
@@ -34,58 +29,6 @@ import { sendMessage } from './sqs-util.js';
  */
 
 const globalContent = {};
-
-async function trigger(context, message) {
-  const {
-    action, mode, tenant, relPath, variation,
-  } = message;
-
-  const storage = new Storage(context);
-  const suffix = variation ? `/variations/${variation}` : '';
-  const s3ObjectPath = extractS3ObjectPath(message);
-
-  if (action === 'store') {
-    // init globalContext for given tenant
-    if (!globalContent[tenant]) {
-      try {
-        globalContent[tenant] = await storage.getKey(`${tenant}/settings.json`);
-      } catch (e) {
-        context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
-      }
-    }
-    const settings = globalContent[tenant];
-    context.log.info(`Pulling content for ${relPath} in ${mode} mode`);
-    const data = await new PullingClient(
-      context,
-      settings[mode].baseURL,
-      settings[mode].authorization,
-    ).pullContent(relPath, variation);
-    if (data) {
-      context.log.info('Content pulled successfully storing in S3');
-      const storedKey = `${s3ObjectPath}.cfm.gql.json${suffix}`;
-      await storage.putKey(
-        storedKey,
-        data,
-        variation,
-      );
-      context.log.info(`putKey ${storedKey} success`);
-      await new InvalidateClient(context).invalidate(`${s3ObjectPath}.cfm.gql.json`, variation);
-      if (!variation) {
-        await new VariationsUtil(
-          context,
-          message,
-        ).process(data, message);
-      }
-      await sendSlackMessage(globalContent[tenant], `Content for ${relPath} stored in ${mode} mode`);
-    }
-  } else {
-    const evictedKeys = [];
-    evictedKeys.push(...await storage.evictKeys(s3ObjectPath));
-    await new InvalidateClient(context).invalidateAll(
-      evictedKeys,
-    );
-  }
-}
 
 async function httpHandler(request, context) {
   const requestUtil = new RequestUtil(request);
@@ -106,7 +49,6 @@ async function httpHandler(request, context) {
     if (payload && validSettings(payload)) {
       await storage.putKey(key, payload);
       globalContent[tenant] = payload;
-      await setupSlack(payload);
       return new Response(`settings stored under ${key}`);
     } else {
       return new Response('Invalid settings value', { status: 400 });
@@ -116,10 +58,13 @@ async function httpHandler(request, context) {
 
 async function run(event, context) {
   const { records } = context;
+  // attach globalContent to context so it can be access by other functions
+  context.globalContent = globalContent;
   if (records) {
     // invoked by SQS trigger, with configured timeout
-    await processQueue(cloneObject(records), async (record) => {
-      await trigger(context, JSON.parse(record.body));
+    // order matter here, we need to process records in order
+    await processSequence(cloneObject(records), async (record) => {
+      await processMessage(context, JSON.parse(record.body));
     });
     return new Response('Records processed', { status: 200 });
   } else {

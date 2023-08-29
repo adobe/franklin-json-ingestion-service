@@ -125,16 +125,6 @@ export async function sendSlackMessage(options, message) {
   }
 }
 
-export async function setupSlack(options) {
-  const settings = options || {};
-  const { slackToken } = settings;
-  const { slackChannelId } = settings;
-  if (slackToken && slackChannelId) {
-    await new SlackClient(SLACK_URL, slackToken)
-      .joinChannel(slackChannelId);
-  }
-}
-
 export function extractVariations(s3Keys) {
   return s3Keys.map((entry) => {
     const key = entry.Key;
@@ -173,6 +163,13 @@ export function collectVariations(data) {
   return variations;
 }
 
+export async function processSequence(records, fn) {
+  const record = records.shift();
+  if (record) {
+    await fn(record);
+    await processSequence(records, fn);
+  }
+}
 export function extractS3ObjectPath(obj) {
   const { tenant, mode, relPath } = obj;
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
