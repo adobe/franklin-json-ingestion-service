@@ -9,14 +9,12 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import processQueue from '@adobe/helix-shared-process-queue';
 import {
-  cleanupVariations, cloneObject, collectVariations,
+  cleanupVariations, collectVariations,
   extractS3ObjectPath, extractVariations,
 } from './utils.js';
 import Storage from './storage.js';
 import InvalidateClient from './invalidate-client.js';
-import { sendMessage } from './sqs-util.js';
 
 export default class VariationsUtil {
   constructor(context, message) {
@@ -38,17 +36,12 @@ export default class VariationsUtil {
       extractVariations(evictedVariationsKeys),
     );
     // then store re-variations existing ones
-    const contextObj = this.context;
-    await processQueue(cloneObject(variations), async (variation) => {
-      const message = {
-        action: 'store',
-        tenant: this.message.tenant,
-        mode: this.message.mode,
-        relPath: this.message.relPath,
-        variation,
-      };
-      contextObj.log.info(`invoking lambda for variation=${variation} via SQS queue`);
-      await sendMessage(contextObj, message);
-    });
+    return variations.map((variation) => ({
+      action: 'store',
+      tenant: this.message.tenant,
+      mode: this.message.mode,
+      relPath: this.message.relPath,
+      variation,
+    }));
   }
 }
