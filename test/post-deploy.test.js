@@ -18,11 +18,11 @@ import { createTargets } from './post-deploy-utils.js';
 
 const sleep = util.promisify(setTimeout);
 
-async function check(url) {
+async function check(url, expected) {
   const checkRes = await fetch(url);
-  if (checkRes.status !== 200) {
+  if (checkRes.status !== expected) {
     await sleep(1000);
-    await check(url);
+    await check(url, expected);
   }
 }
 
@@ -67,6 +67,7 @@ createTargets().forEach((target) => {
         },
       });
       assert.strictEqual(evictRes.status, 200);
+      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json', 404);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
         body: {
@@ -77,7 +78,7 @@ createTargets().forEach((target) => {
         },
       });
       assert.strictEqual(res.status, 200);
-      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json');
+      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json', 200);
     }).timeout(50000);
   });
 });
