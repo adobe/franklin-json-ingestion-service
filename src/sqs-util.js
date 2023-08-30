@@ -41,14 +41,14 @@ export async function processMessage(context, message) {
 
   if (action === 'store') {
     // init globalContext for given tenant
-    if (!context.globalContent[tenant]) {
+    if (!context.cachedSettings[tenant]) {
       try {
-        context.globalContent[tenant] = await storage.getKey(`${tenant}/settings.json`);
+        context.cachedSettings[tenant] = await storage.getKey(`${tenant}/settings.json`);
       } catch (e) {
         context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
       }
     }
-    const settings = context.globalContent[tenant];
+    const settings = context.cachedSettings[tenant];
     context.log.info(`Pulling content for ${relPath} in ${mode} mode`);
     const data = await new PullingClient(
       context,
@@ -70,14 +70,14 @@ export async function processMessage(context, message) {
           context,
           message,
         ).process(data, message);
-        processQueue(cloneObject(variationMessages), async (variationMessage) => {
+        await processQueue(cloneObject(variationMessages), async (variationMessage) => {
           await processMessage(context, variationMessage);
         });
       }
       const varSelector = variation ? `${variation}.` : '';
       const varMessage = variation ? ` for variation ${variation}` : '';
       const url = `${settings[mode].external}/content/dam/${relPath}.cfm.gql.${varSelector}json`;
-      await sendSlackMessage(context.globalContent[tenant], `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`);
+      await sendSlackMessage(context.cachedSettings[tenant], `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`);
     }
   } else {
     const evictedKeys = [];

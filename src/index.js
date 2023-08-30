@@ -28,7 +28,7 @@ import { sendMessage, processMessage } from './sqs-util.js';
  * @returns {Response} a response
  */
 
-const globalContent = {};
+const cachedSettings = {};
 
 async function httpHandler(request, context) {
   const requestUtil = new RequestUtil(request);
@@ -48,7 +48,7 @@ async function httpHandler(request, context) {
     const key = `${tenant}/settings.json`;
     if (payload && validSettings(payload)) {
       await storage.putKey(key, payload);
-      globalContent[tenant] = payload;
+      context.cachedSettings[tenant] = payload;
       return new Response(`settings stored under ${key}`);
     } else {
       return new Response('Invalid settings value', { status: 400 });
@@ -58,24 +58,15 @@ async function httpHandler(request, context) {
 
 async function run(event, context) {
   const { records } = context;
-  // attach globalContent to context so it can be access by other functions
-  context.globalContent = globalContent;
+  // attach cachedSettings to context so it can be access by other functions
+  context.cachedSettings = cachedSettings;
   if (records) {
-    const failures = [];
-    const sqsResponse = {
-      batchItemFailures: failures,
-    };
     // invoked by SQS trigger, with configured timeout
     // order matter here, we need to process records in order
     await processSequence(cloneObject(records), async (record) => {
-      try {
-        await processMessage(context, JSON.parse(record.body));
-      } catch (e) {
-        context.log.error(`an error occurred while processing the record ${record.messageId}`, e);
-        failures.push({ itemIdentifier: record.messageId });
-      }
+      await processMessage(context, JSON.parse(record.body));
     });
-    return sqsResponse;
+    return new Response('ok');
   } else {
     return httpHandler(event, context);
   }

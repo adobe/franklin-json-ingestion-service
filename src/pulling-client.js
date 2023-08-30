@@ -20,28 +20,23 @@ export default class PullingClient {
 
   async pullContent(key, variation) {
     let content;
-    let url;
-    try {
-      const varSelector = variation ? `.${variation}` : '';
-      url = `${this.baseURL}/content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
-      const headers = {};
-      if (this.authorization) {
-        headers.Authorization = this.authorization;
-      }
-      const startTime = Date.now();
-      this.context.log.info(`pulling content from ${url} initiated`);
-      const response = await fetch(url, { method: 'GET', headers });
-      const elapsedTime = Date.now() - startTime;
-      this.context.log.info(`pulling content from ${url} completed in ${elapsedTime}ms`);
-      if (response.status === 200) {
-        this.context.log.info(`pulling content from ${url} success`);
-        content = await response.json();
-      } else {
-        this.context.log.info(`pulling content from ${url} failed due to ${response.status} code`);
-      }
-    } catch (err) {
-      this.context.log.error(`pulling content failed due to ${err.message}`);
-      throw new Error(`Pulling content failed for ${url}`, err);
+    const varSelector = variation ? `.${variation}` : '';
+    const url = `${this.baseURL}/content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
+    const headers = {};
+    if (this.authorization) {
+      headers.Authorization = this.authorization;
+    }
+    const startTime = Date.now();
+    this.context.log.info(`pulling content from ${url} initiated`);
+    const response = await fetch(url, { method: 'GET', headers });
+    const elapsedTime = Date.now() - startTime;
+    this.context.log.info(`pulling content from ${url} completed in ${elapsedTime}ms`);
+    if (response.status === 200) {
+      this.context.log.info(`pulling content from ${url} success`);
+      content = await response.json();
+    } else {
+      this.context.log.info(`pulling content from ${url} failed due to ${response.status} code`);
+      throw new Error(`Pulling content failed for ${url} due to ${response.status} code`);
     }
     return content;
   }

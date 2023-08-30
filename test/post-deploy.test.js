@@ -13,7 +13,18 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { noCache } from '@adobe/fetch';
+import util from 'util';
 import { createTargets } from './post-deploy-utils.js';
+
+const sleep = util.promisify(setTimeout);
+
+async function check(url) {
+  const checkRes = await fetch(url);
+  if (checkRes.status !== 200) {
+    await sleep(1000);
+    await check(url);
+  }
+}
 
 createTargets().forEach((target) => {
   describe(`Post-Deploy Tests (${target.title()})`, () => {
@@ -45,17 +56,28 @@ createTargets().forEach((target) => {
       assert.strictEqual(res.status, 405);
     }).timeout(50000);
 
-    it('store sample in preview', async () => {
+    it('re-store sample in preview', async () => {
+      const evictRes = await fetch(`${target.host()}${target.urlPath()}`, {
+        method: 'POST',
+        body: {
+          tenant: 'localhost',
+          action: 'evict',
+          relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
+          mode: 'live',
+        },
+      });
+      assert.strictEqual(evictRes.status, 200);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
         body: {
           tenant: 'localhost',
           action: 'store',
           relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
-          mode: 'preview',
+          mode: 'live',
         },
       });
       assert.strictEqual(res.status, 200);
+      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json');
     }).timeout(50000);
   });
 });

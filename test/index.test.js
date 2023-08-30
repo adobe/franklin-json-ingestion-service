@@ -42,25 +42,24 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 405);
   });
   it('process sqs records with failures', async () => {
-    const result = await main({
-      headers: {
-        has: () => false,
-      },
-    }, {
-      records: [{
-        messageId: '123',
-        body: JSON.stringify({
-          action: 'store',
-          tenant: 'local',
-          relPath: 'a/b/c',
-          mode: 'preview',
-        }),
-      }],
+    await assert.rejects(async () => {
+      await main({
+        headers: {
+          has: () => false,
+        },
+      }, {
+        records: [{
+          messageId: '123',
+          body: JSON.stringify({
+            action: 'store',
+            tenant: 'local',
+            relPath: 'a/b/c',
+            mode: 'preview',
+          }),
+        }],
+      });
     });
-    assert.deepStrictEqual(await result.batchItemFailures, [{
-      itemIdentifier: '123',
-    }]);
-  });
+  }, Error);
   it('process sqs records with no failures', async () => {
     nock('http://author-localhost')
       .get(/\/content\/dam\/a\/b\/c.cfm.gql.json/)
@@ -90,12 +89,12 @@ describe('Index Tests', () => {
         IsTruncated: false,
         Contents: [],
       });
-    const result = await main({
+    const response = await main({
       headers: {
         has: () => false,
       },
     }, {
-      globalContent: [],
+      cachedSettings: [],
       records: [{
         messageId: '123',
         body: JSON.stringify({
@@ -106,7 +105,7 @@ describe('Index Tests', () => {
         }),
       }],
     });
-    assert.deepStrictEqual(await result.batchItemFailures, []);
+    assert.deepStrictEqual(response.status, 200);
   });
   it('stores in preview as implicit operation', async () => {
     const s3Mock = mockClient(S3Client);
