@@ -17,30 +17,10 @@ import {
   ListObjectsV2Command, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
-import nock from 'nock';
-import Storage from '../src/storage.js';
 import VariationsUtil from '../src/variations-util.js';
 
 describe('Variations Utils Tests', () => {
-  it('call store on collected variations', async () => {
-    nock('http://awslocalhost')
-      .post('/endpoint', {
-        tenant: 'localhost',
-        action: 'store',
-        mode: 'preview',
-        variation: 'var2',
-        relPath: 'a/b/c',
-      })
-      .reply(200, {})
-      .post('/endpoint', {
-        tenant: 'localhost',
-        action: 'store',
-        mode: 'preview',
-        variation: 'var1',
-        relPath: 'a/b/c',
-      })
-      .reply(200, {});
-
+  it('generate variationMessages on collected variations', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
@@ -53,52 +33,31 @@ describe('Variations Utils Tests', () => {
       });
     const varUtil = new VariationsUtil(
       { log: console },
-      'http://awslocalhost/endpoint',
       {
         tenant: 'localhost',
         mode: 'preview',
         relPath: 'a/b/c',
       },
-      new Storage(),
     );
-    await varUtil.process({
+    const variationMessages = await varUtil.process({
       _variations: ['var1', 'var2'],
     });
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
-  });
-  it('call store on collected variations failing endpoint', async () => {
-    nock('http://awslocalhost')
-      .post('/endpoint', {
-        tenant: 'localhost',
-        action: 'store',
-        mode: 'preview',
-        variation: 'var1',
-        relPath: 'a/b/c',
-      })
-      .reply(500, {});
-    const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command)
-      .resolvesOnce({
-        IsTruncated: false,
-        Contents: [],
-      });
-    const varUtil = new VariationsUtil(
-      null,
-      'http://awslocalhost/endpoint',
+    assert.deepStrictEqual(variationMessages, [
       {
+        action: 'store',
         tenant: 'localhost',
         mode: 'preview',
         relPath: 'a/b/c',
+        variation: 'var1',
       },
-      new Storage(),
-    );
-    await assert.rejects(async () => {
-      await varUtil.process({
-        _variations: ['var1'],
-      });
-    }, {
-      name: 'Error',
-      message: 'Error while doing call to store variation: var1 due to  for http://awslocalhost/endpoint',
-    });
+      {
+        action: 'store',
+        tenant: 'localhost',
+        mode: 'preview',
+        relPath: 'a/b/c',
+        variation: 'var2',
+      },
+    ]);
   });
 });

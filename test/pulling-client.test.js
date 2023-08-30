@@ -58,8 +58,12 @@ describe('PullingClient Tests', () => {
     assert.strictEqual(result, undefined);
   });
   it('pullContent invalid url', async () => {
-    const result = await new PullingClient({ log: console })
-      .pullContent('ccsurfaces/en_US/landing-page');
-    assert.strictEqual(result, undefined);
+    await assert.rejects(async () => {
+      await new PullingClient({ log: console }).pullContent('invalid/url');
+    }, (err) => {
+      assert.strictEqual(err.name, 'Error');
+      assert.match(err.message, /Pulling content failed for .*/);
+      return true;
+    });
   });
 });

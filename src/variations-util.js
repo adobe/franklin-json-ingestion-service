@@ -18,7 +18,7 @@ import InvalidateClient from './invalidate-client.js';
 
 export default class VariationsUtil {
   constructor(context, message) {
-    this.context = context || { log: console };
+    this.context = context;
     this.message = message;
   }
 

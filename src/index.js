@@ -61,12 +61,21 @@ async function run(event, context) {
   // attach globalContent to context so it can be access by other functions
   context.globalContent = globalContent;
   if (records) {
+    const failures = [];
+    const sqsResponse = {
+      batchItemFailures: failures,
+    };
     // invoked by SQS trigger, with configured timeout
     // order matter here, we need to process records in order
     await processSequence(cloneObject(records), async (record) => {
-      await processMessage(context, JSON.parse(record.body));
+      try {
+        await processMessage(context, JSON.parse(record.body));
+      } catch (e) {
+        context.log.error(`an error occurred while processing the record ${record.messageId}`, e);
+        failures.push({ itemIdentifier: record.messageId });
+      }
     });
-    return new Response('Records processed', { status: 200 });
+    return sqsResponse;
   } else {
     return httpHandler(event, context);
   }

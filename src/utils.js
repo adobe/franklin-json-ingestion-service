@@ -122,6 +122,9 @@ export async function sendSlackMessage(options, message) {
   if (slackToken && slackChannelId) {
     await new SlackClient(SLACK_URL, slackToken)
       .postMessage(slackChannelId, message);
+    return true;
+  } else {
+    return false;
   }
 }
 

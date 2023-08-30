@@ -20,9 +20,10 @@ export default class PullingClient {
 
   async pullContent(key, variation) {
     let content;
+    let url;
     try {
       const varSelector = variation ? `.${variation}` : '';
-      const url = `${this.baseURL}/content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
+      url = `${this.baseURL}/content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
       const headers = {};
       if (this.authorization) {
         headers.Authorization = this.authorization;
@@ -40,6 +41,7 @@ export default class PullingClient {
       }
     } catch (err) {
       this.context.log.error(`pulling content failed due to ${err.message}`);
+      throw new Error(`Pulling content failed for ${url}`, err);
     }
     return content;
   }
