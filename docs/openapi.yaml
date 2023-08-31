@@ -13,7 +13,7 @@ security:
   - ApiKey: [ ]
   - Organization: [ ]
 servers:
-  - url: https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/v1
+  - url: https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/v2
 paths:
   /:
     post:

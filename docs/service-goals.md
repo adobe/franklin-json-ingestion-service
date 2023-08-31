@@ -16,13 +16,10 @@ The interface for this service is described with the [OpenAPI](swagger.html)
 It mainly supports 3 types of action:
 - **store**: to store a given JSON in a specific location of the storage.
 - **evict**: to remove a given JSON at a specific location of the storage.
+- **settings**: to store information used during processing (.e.g slack, aem urls etc..).
 
-In the **store** case it's up to the provider to generate the JSON that will be stored.
+In the **store** and **evict** case the processing will be done in background via a fifo SQS queue.
 
 # "cfm.gql" / Fully Hydrated JSON format
 
 Legacy format used by Odin, which is the result of a GraphQL query execution, and so have a very specific format signature.
-
-# Additional Note
-
-Along with that process, a side process could index the JSONs and provide new query service.

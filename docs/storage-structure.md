@@ -15,6 +15,7 @@ Following is an example how it could look like when content is stored in the S3 
 
 ```
 - tenant1
+  settings.json (used to store tenant specific settings, e.g. slack, aem urls etc..)
   -live
     -folder1
       -fruits
