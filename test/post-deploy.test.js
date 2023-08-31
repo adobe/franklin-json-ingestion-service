@@ -40,9 +40,7 @@ async function check(tenant, mode, suffix, expected, retries) {
 
 createTargets().forEach((target) => {
   describe(`Post-Deploy Tests (${target.title()})`, () => {
-    console.log('using', target.host(), target.urlPath());
-
-    afterEach(async() => {
+    afterEach(async () => {
       await fetchContext.reset();
     });
 
