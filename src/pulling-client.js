@@ -21,7 +21,8 @@ export default class PullingClient {
   async pullContent(key, variation) {
     let content;
     const varSelector = variation ? `.${variation}` : '';
-    const url = `${this.baseURL}/content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
+    // note the // is intentional to avoid using cloudflare workers but really use origin
+    const url = `${this.baseURL}//content/dam/${key}.cfm.gql${varSelector}.json?ck=${Date.now()}`;
     const headers = {};
     if (this.authorization) {
       headers.Authorization = this.authorization;
