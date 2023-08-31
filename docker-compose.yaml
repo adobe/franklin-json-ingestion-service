@@ -9,7 +9,6 @@ services:
       - SERVICES=s3,apigateway,sqs,lambda,secretsmanager
     ports:
       - '4566:4566'
-      - '4567:4567'
     volumes:
       - "${TEMPDIR:-/tmp/localstack}:/tmp/localstack"
       - ./test/aws:/etc/localstack/init/ready.d

@@ -1,30 +1,10 @@
-# Setup Settings
-POST {{endpoint}} HTTP/1.1
-content-type: application/json;charset=utf-8
-
-{
-  "action": "settings",
-  "tenant": "localhost",
-  "payload": {
-    "preview": {
-      "baseURL": "https://2d56-92-184-124-150.ngrok-free.app",
-      "authorization": "Basic ZnJhbmtsaW4taW5nZXN0b3I6MTIzNA=="
-    },
-    "live": {
-      "baseURL": "https://29fe-92-184-124-150.ngrok-free.app"
-    }
-  }
-}
-
-###
-
 # Store payload in preview
 POST {{endpoint}} HTTP/1.1
 content-type: application/json;charset=utf-8
 
 {
     "action": "store",
-    "tenant": "1ddae356422974932f5f02946a3f2670d782ac7eae55edb32e4b9b65f7d",
+    "tenant": "localhost",
     "relPath": "a/b/c",
     "mode": "preview",
     "payload": {
@@ -56,7 +36,7 @@ content-type: application/json
 
 {
     "action": "evict",
-    "tenant": "local",
+    "tenant": "localhost",
     "relPath": "a/b/c",
     "mode": "preview"
 }
@@ -69,7 +49,7 @@ content-type: application/json
 
 {
     "action": "store",
-    "tenant": "local",
+    "tenant": "localhost",
     "relPath": "a/b/c",
     "mode": "live"
 }
@@ -82,7 +62,7 @@ content-type: application/json
 
 {
     "action": "evict",
-    "tenant": "wknd",
+    "tenant": "localhost",
     "relPath": "en/adventures/all-adventures",
     "mode": "preview"
 }
