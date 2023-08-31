@@ -10,7 +10,11 @@
  * governing permissions and limitations under the License.
  */
 
+import SlackClient from './slack-client.js';
+
 const SUFFIX = '.cfm.gql.json';
+/* c8 ignore next */
+const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';
 
 export function cloneObject(object) {
   return JSON.parse(JSON.stringify(object));
@@ -111,6 +115,19 @@ export function extractVariation(key) {
   return idx >= 0 ? `${key.substring(idx + pattern.length)}` : null;
 }
 
+export async function sendSlackMessage(options, message) {
+  const settings = options || {};
+  const { slackToken } = settings;
+  const { slackChannelId } = settings;
+  if (slackToken && slackChannelId) {
+    await new SlackClient(SLACK_URL, slackToken)
+      .postMessage(slackChannelId, message);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export function extractVariations(s3Keys) {
   return s3Keys.map((entry) => {
     const key = entry.Key;
@@ -149,8 +166,15 @@ export function collectVariations(data) {
   return variations;
 }
 
-export function extractS3ObjectPath(requestUtil) {
-  const { tenant, mode, relPath } = requestUtil;
+export async function processSequence(records, fn) {
+  const record = records.shift();
+  if (record) {
+    await fn(record);
+    await processSequence(records, fn);
+  }
+}
+export function extractS3ObjectPath(obj) {
+  const { tenant, mode, relPath } = obj;
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
   const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   return mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;

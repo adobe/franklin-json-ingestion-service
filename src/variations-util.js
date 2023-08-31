@@ -9,24 +9,21 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-import { fetch } from '@adobe/fetch';
-import processQueue from '@adobe/helix-shared-process-queue';
 import {
-  cleanupVariations, cloneObject, collectVariations, extractS3ObjectPath, extractVariations,
+  cleanupVariations, collectVariations,
+  extractS3ObjectPath, extractVariations,
 } from './utils.js';
 import Storage from './storage.js';
-import { APPLICATION_JSON } from './constants.js';
 import InvalidateClient from './invalidate-client.js';
 
 export default class VariationsUtil {
-  constructor(context, baseURL, requestUtil) {
-    this.context = context || { log: console };
-    this.baseURL = baseURL;
-    this.requestUtil = requestUtil;
+  constructor(context, message) {
+    this.context = context;
+    this.message = message;
   }
 
   async process(data) {
-    const s3ObjectPath = extractS3ObjectPath(this.requestUtil);
+    const s3ObjectPath = extractS3ObjectPath(this.message);
     const variations = Array.from(collectVariations(data));
     // cleanup non existing variations
     const evictedVariationsKeys = await cleanupVariations(
@@ -39,24 +36,12 @@ export default class VariationsUtil {
       extractVariations(evictedVariationsKeys),
     );
     // then store re-variations existing ones
-    const contextObj = this.context;
-    await processQueue(cloneObject(variations), async (variation) => {
-      const options = {
-        method: 'POST',
-        headers: { 'content-type': APPLICATION_JSON },
-        body: {
-          action: 'store',
-          tenant: this.requestUtil.tenant,
-          mode: this.requestUtil.mode,
-          relPath: this.requestUtil.relPath,
-          variation,
-        },
-      };
-      contextObj.log.info('invoking lambda for variation ', variation);
-      const response = await fetch(this.baseURL, options);
-      if (response.status !== 200) {
-        throw new Error(`Error while doing call to store variation: ${variation} due to ${response.statusText} for ${this.baseURL}`);
-      }
-    });
+    return variations.map((variation) => ({
+      action: 'store',
+      tenant: this.message.tenant,
+      mode: this.message.mode,
+      relPath: this.message.relPath,
+      variation,
+    }));
   }
 }

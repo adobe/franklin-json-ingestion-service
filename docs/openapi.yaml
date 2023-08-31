@@ -4,7 +4,7 @@ info:
   description: |
     APIs to ingest json and store it in S3.
 
-  version: 0.0.1
+  version: 2.0.0
 tags:
   - name: Franklin
     description: Franklin json Ingestor Service APIs
@@ -19,9 +19,9 @@ paths:
     post:
       tags:
         - Franklin
-      summary: Store | Evict json .
+      summary: Store | Evict | Settings .
       description: |
-        This api allow to store | evict a resource stored in S3 bucket.
+        This api allow to store | evict a resource stored in S3 bucket in background. And configure tenant settings.
       requestBody:
         $ref: '#/components/requestBodies/RequestJSONIngestor'
       responses:
@@ -32,7 +32,7 @@ paths:
 components:
   requestBodies:
     RequestJSONIngestor:
-      description: The request payload for the franklin json ingestor api.
+      description: The request body for the franklin json ingestor api.
       content:
         application/json:
           schema:
@@ -63,9 +63,9 @@ components:
                 example: a/b/c
               payload:
                 type: string
-                description: Optional (only for store operation), Json string representation to be stored as json file.
+                description: Optional (only for settings operation), Json string representation to be stored as json file.
                 example:
-                  test: some content
+                  test: "{ .... }"
               variation:
                 type: string
                 description: Optional, the variation under which it should be stored. i.e <tenant>/<mode><relPath>.cfm.gql.json/variations/<variation>
@@ -91,7 +91,7 @@ components:
         text/plain:
           schema:
             type: string
-            example: sample/preview/a/b/c.json stored
+            example: processing store in background
     InvalidParameters:
       description: |
         The server failed on validating the parameters.

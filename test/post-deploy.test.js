@@ -13,15 +13,35 @@
 /* eslint-env mocha */
 import assert from 'assert';
 import { noCache } from '@adobe/fetch';
+import util from 'util';
 import { createTargets } from './post-deploy-utils.js';
+
+const fetchContext = noCache();
+const { fetch } = fetchContext;
+
+const sleep = util.promisify(setTimeout);
+const MAX_RETRIES = 50;
+
+async function check(tenant, mode, suffix, expected, retries) {
+  if (retries < 0) {
+    throw new Error('too many retries');
+  }
+  const checkRes = await fetch(`https://api.experiencecloud.live/delivery/${tenant}/${mode}/${suffix}`, {
+    cache: 'no-store',
+    headers: {
+      'x-api-key': process.env.EXPERIENCE_CLOUD_TOKEN,
+    },
+  });
+  if (checkRes.status !== expected) {
+    await sleep(1000);
+    await check(tenant, mode, suffix, expected, retries ? retries - 1 : 0);
+  }
+}
 
 createTargets().forEach((target) => {
   describe(`Post-Deploy Tests (${target.title()})`, () => {
-    const fetchContext = noCache();
-    const { fetch } = fetchContext;
-
-    afterEach(() => {
-      fetchContext.reset();
+    afterEach(async () => {
+      await fetchContext.reset();
     });
 
     it('returns the status of the function', async () => {
@@ -45,17 +65,42 @@ createTargets().forEach((target) => {
       assert.strictEqual(res.status, 405);
     }).timeout(50000);
 
-    it('store sample in preview', async () => {
+    it('re-store sample in preview', async () => {
+      const tenant = 'localhost';
+      const mode = 'live';
+      const relPath = 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT';
+      const evictRes = await fetch(`${target.host()}${target.urlPath()}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenant,
+          action: 'evict',
+          relPath,
+          mode,
+        }),
+      });
+      assert.strictEqual(evictRes.status, 200);
+      await check(tenant, mode, `${relPath}.cfm.gql.json`, 404, MAX_RETRIES);
+      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 404, MAX_RETRIES);
+      await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 404, MAX_RETRIES);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
-        body: {
-          tenant: 'localhost',
-          action: 'store',
-          relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
-          mode: 'preview',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          tenant,
+          action: 'store',
+          relPath,
+          mode,
+        }),
       });
       assert.strictEqual(res.status, 200);
+      await check(tenant, mode, `${relPath}.cfm.gql.json`, 200, MAX_RETRIES);
+      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 200, MAX_RETRIES);
+      await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 200, MAX_RETRIES);
     }).timeout(50000);
   });
 });

@@ -11,13 +11,20 @@
  */
 /* eslint-env mocha */
 import assert from 'assert';
+import nock from 'nock';
 import {
   collectReferences,
   createReferenceToObjectMapping,
   extractCFReferencesProperties,
   replaceRefsWithObject,
   filterVariationsKeys,
-  extractVariations, extractVariation, extractRootKey, collectVariations,
+  extractVariations,
+  extractVariation,
+  extractRootKey,
+  collectVariations,
+  sendSlackMessage,
+  processSequence,
+  cloneObject, extractS3ObjectPath,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -228,5 +235,46 @@ describe('Utils Tests', () => {
       },
     })).sort();
     assert.deepStrictEqual(variations, ['var1', 'var2', 'var3', 'var4', 'var5']);
+  });
+  it('processSequence', async () => {
+    const sequence = [4, 2, 6, 7];
+    const result = [];
+    const input = cloneObject(sequence);
+    await processSequence(input, async (item) => {
+      result.push(item);
+    });
+    assert.deepStrictEqual(result, sequence);
+    assert.deepStrictEqual(input, []);
+  });
+  it('extractS3ObjectPath', async () => {
+    assert.strictEqual(extractS3ObjectPath({
+      tenant: 'local',
+      mode: 'preview',
+      relPath: 'a/b/c',
+    }), 'local/preview/a/b/c');
+    assert.strictEqual(extractS3ObjectPath({
+      tenant: 'local',
+      mode: 'live',
+      relPath: 'a/b/c',
+    }), 'local/live/a/b/c');
+  });
+  it('sendSlackMessage with settings', async () => {
+    nock('http://slackcloudservice', {
+      reqheaders: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer dummyToken',
+      },
+    }).post('/api/chat.postMessage', (requestBody) => {
+      assert.strictEqual(requestBody.channel, 'dummyChannelId');
+      assert.strictEqual(requestBody.blocks[0].text.text, 'dummyMessage');
+      return true;
+    }).reply(200, { ok: true });
+    assert.strictEqual(await sendSlackMessage({
+      slackChannelId: 'dummyChannelId',
+      slackToken: 'dummyToken',
+    }, 'dummyMessage'), true);
+  });
+  it('sendSlackMessage without settings', async () => {
+    assert.strictEqual(await sendSlackMessage(null, 'dummyMessage'), false);
   });
 });
