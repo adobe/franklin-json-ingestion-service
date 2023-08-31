@@ -78,6 +78,8 @@ createTargets().forEach((target) => {
       });
       assert.strictEqual(evictRes.status, 200);
       await check(tenant, mode, `${relPath}.cfm.gql.json`, 404);
+      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 404);
+      await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 404);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
         headers: {
@@ -92,6 +94,8 @@ createTargets().forEach((target) => {
       });
       assert.strictEqual(res.status, 200);
       await check(tenant, mode, `${relPath}.cfm.gql.json`, 200);
+      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 200);
+      await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 200);
     }).timeout(50000);
   });
 });
