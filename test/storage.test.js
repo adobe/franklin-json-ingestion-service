@@ -44,6 +44,33 @@ describe('Storage Tests', () => {
     };
     const result = await new Storage().putKey(key, payload);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
+    const calls = s3Mock.commandCalls(PutObjectCommand);
+    assert.deepStrictEqual(calls[0].firstArg.input, {
+      Bucket: 'franklin-content-bus-headless',
+      Key: 'local/preview/a/b/c.json',
+      Body: '{"test":"value"}',
+      ContentType: 'application/json;charset=utf-8',
+    });
+    assert.strictEqual(result, key);
+  });
+  it('putKey with variation add metadata', async () => {
+    const s3Mock = mockClient(S3Client);
+    const key = 'local/preview/a/b/c.json/variations/var1';
+    const payload = {
+      test: 'value',
+    };
+    const result = await new Storage().putKey(key, payload, 'var1');
+    assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
+    const calls = s3Mock.commandCalls(PutObjectCommand);
+    assert.deepStrictEqual(calls[0].firstArg.input, {
+      Bucket: 'franklin-content-bus-headless',
+      Key: 'local/preview/a/b/c.json/variations/var1',
+      Body: '{"test":"value"}',
+      ContentType: 'application/json;charset=utf-8',
+      Metadata: {
+        variation: 'var1',
+      },
+    });
     assert.strictEqual(result, key);
   });
   it('putKey fails on invalid payload value', async () => {

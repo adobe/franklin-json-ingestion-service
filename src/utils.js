@@ -122,16 +122,9 @@ export async function sendSlackMessage(options, message) {
   if (slackToken && slackChannelId) {
     await new SlackClient(SLACK_URL, slackToken)
       .postMessage(slackChannelId, message);
-  }
-}
-
-export async function setupSlack(options) {
-  const settings = options || {};
-  const { slackToken } = settings;
-  const { slackChannelId } = settings;
-  if (slackToken && slackChannelId) {
-    await new SlackClient(SLACK_URL, slackToken)
-      .joinChannel(slackChannelId);
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -173,8 +166,15 @@ export function collectVariations(data) {
   return variations;
 }
 
-export function extractS3ObjectPath(requestUtil) {
-  const { tenant, mode, relPath } = requestUtil;
+export async function processSequence(records, fn) {
+  const record = records.shift();
+  if (record) {
+    await fn(record);
+    await processSequence(records, fn);
+  }
+}
+export function extractS3ObjectPath(obj) {
+  const { tenant, mode, relPath } = obj;
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
   const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   return mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;

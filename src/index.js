@@ -15,13 +15,11 @@ import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
 import RequestUtil from './request-util.js';
-import InvalidateClient from './invalidate-client.js';
 import {
-  extractS3ObjectPath, sendSlackMessage, setupSlack,
+  cloneObject, processSequence,
   validSettings,
 } from './utils.js';
-import PullingClient from './pulling-client.js';
-import VariationsUtil from './variations-util.js';
+import { sendMessage, processMessage } from './sqs-util.js';
 
 /**
  * This is the main function
@@ -30,10 +28,9 @@ import VariationsUtil from './variations-util.js';
  * @returns {Response} a response
  */
 
-const globalContent = {};
+const cachedSettings = {};
 
-async function run(request, context) {
-  const endpoint = process.env.SERVER_ENDPOINT_URL || request.url;
+async function httpHandler(request, context) {
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
 
@@ -41,71 +38,37 @@ async function run(request, context) {
     return new Response(requestUtil.errorMessage, { status: requestUtil.errorStatusCode });
   }
 
-  const {
-    action, mode, tenant, relPath, payload, variation,
-  } = requestUtil;
+  const { action, payload, tenant } = requestUtil;
 
   const storage = new Storage(context);
-  const suffix = variation ? `/variations/${variation}` : '';
-  const s3ObjectPath = extractS3ObjectPath(requestUtil);
-
-  if (action === 'store') {
-    let data = payload;
-    if (!data) {
-      // init globalContext for given tenant
-      if (!globalContent[tenant]) {
-        try {
-          globalContent[tenant] = await storage.getKey(`${tenant}/settings.json`);
-        } catch (e) {
-          context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
-          return new Response('Please call settings action to setup pulling client', { status: 400 });
-        }
-      }
-      const settings = globalContent[tenant];
-      data = await new PullingClient(
-        context,
-        settings[mode].baseURL,
-        settings[mode].authorization,
-      ).pullContent(relPath, variation);
-    }
-    if (data) {
-      const storedKey = `${s3ObjectPath}.cfm.gql.json${suffix}`;
-      const k = await storage.putKey(
-        storedKey,
-        data,
-        variation,
-      );
-      context.log.info(`putKey ${storedKey} success`);
-      await new InvalidateClient(context).invalidate(`${s3ObjectPath}.cfm.gql.json`, variation);
-      if (!variation) {
-        await new VariationsUtil(
-          context,
-          endpoint,
-          requestUtil,
-        ).process(data, requestUtil);
-      }
-      await sendSlackMessage(globalContent[tenant], `Content for ${relPath} stored in ${mode} mode`);
-      return new Response(`${k} stored`);
-    } else {
-      return new Response('Empty data, nothing to store', { status: 400 });
-    }
-  } else if (action === 'settings') {
+  if (action === 'store' || action === 'evict') {
+    await sendMessage(context, requestUtil.toMessage());
+    return new Response(`processing ${action} in background`);
+  } else {
     const key = `${tenant}/settings.json`;
     if (payload && validSettings(payload)) {
       await storage.putKey(key, payload);
-      globalContent[tenant] = payload;
-      await setupSlack(payload);
+      context.cachedSettings[tenant] = payload;
       return new Response(`settings stored under ${key}`);
     } else {
       return new Response('Invalid settings value', { status: 400 });
     }
+  }
+}
+
+async function run(event, context) {
+  const { records } = context;
+  // attach cachedSettings to context so it can be access by other functions
+  context.cachedSettings = cachedSettings;
+  if (records) {
+    // invoked by SQS trigger, with configured timeout
+    // order matter here, we need to process records in order
+    await processSequence(cloneObject(records), async (record) => {
+      await processMessage(context, JSON.parse(record.body));
+    });
+    return new Response('ok');
   } else {
-    const evictedKeys = [];
-    evictedKeys.push(...await storage.evictKeys(s3ObjectPath));
-    await new InvalidateClient(context).invalidateAll(
-      evictedKeys,
-    );
-    return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
+    return httpHandler(event, context);
   }
 }
 

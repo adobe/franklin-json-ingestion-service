@@ -32,25 +32,6 @@ export default class SlackClient {
     this.authorization = `Bearer ${token}`;
   }
 
-  async createConversation(userId) {
-    const url = `${this.baseURL}/api/conversations.open`;
-    const headers = this.buildDefaultHeaders();
-    const body = {
-      users: userId,
-    };
-    const response = await fetch(url, { method: 'POST', headers, body });
-    if (response.status === 200) {
-      const data = await response.json();
-      if (data.ok) {
-        return data.channel.id;
-      } else {
-        throw new Error(`Error while doing call to create conversation: ${userId} due to ${data.error}`);
-      }
-    } else {
-      throw new Error(`Error while doing call to create conversation: ${userId} due to ${response.statusText}`);
-    }
-  }
-
   async postMessage(channelId, message) {
     const url = `${this.baseURL}/api/chat.postMessage`;
     const headers = this.buildDefaultHeaders();
@@ -63,39 +44,6 @@ export default class SlackClient {
       }
     } else {
       throw new Error(`Error while doing call to post message: ${channelId} due to ${response.statusText}`);
-    }
-  }
-
-  async joinChannel(channelId) {
-    const url = `${this.baseURL}/api/conversations.join`;
-    const headers = this.buildDefaultHeaders();
-    const body = {
-      channel: channelId,
-    };
-    const response = await fetch(url, { method: 'POST', headers, body });
-    if (response.status === 200) {
-      const data = await response.json();
-      if (!data.ok) {
-        throw new Error(`Error while doing call to join: ${channelId} due to ${data.error}`);
-      }
-    } else {
-      throw new Error(`Error while doing call to join: ${channelId} due to ${response.statusText}`);
-    }
-  }
-
-  async findUserIdByEmail(email) {
-    const url = `${this.baseURL}/api/users.lookupByEmail?email=${email}`;
-    const headers = this.buildDefaultHeaders();
-    const response = await fetch(url, { method: 'GET', headers });
-    if (response.status === 200) {
-      const data = await response.json();
-      if (data.ok) {
-        return data.user.id;
-      } else {
-        throw new Error(`Error while doing call to find user id by email: ${email} due to ${data.error}`);
-      }
-    } else {
-      throw new Error(`Error while doing call to find user id by email: ${email} due to ${response.statusText}`);
     }
   }
 

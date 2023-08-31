@@ -53,13 +53,13 @@ describe('PullingClient Tests', () => {
     nock('http://localhost')
       .get(/\/content\/dam\/ccsurfaces\/en_US\/landing-page.cfm.gql.json\?ck=.*/)
       .reply(404, {});
-    const result = await new PullingClient({ log: console }, 'http://localhost')
-      .pullContent('ccsurfaces/en_US/landing-page');
-    assert.strictEqual(result, undefined);
-  });
-  it('pullContent invalid url', async () => {
-    const result = await new PullingClient({ log: console })
-      .pullContent('ccsurfaces/en_US/landing-page');
-    assert.strictEqual(result, undefined);
+    await assert.rejects(async () => {
+      await new PullingClient({ log: console }, 'http://localhost')
+        .pullContent('ccsurfaces/en_US/landing-page');
+    }, (err) => {
+      assert.strictEqual(err.name, 'Error');
+      assert.match(err.message, /Pulling content failed for .*/);
+      return true;
+    });
   });
 });
