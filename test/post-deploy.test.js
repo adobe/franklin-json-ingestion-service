@@ -12,24 +12,27 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
-import { noCache } from '@adobe/fetch';
+import { noCache, fetch } from '@adobe/fetch';
 import util from 'util';
 import { createTargets } from './post-deploy-utils.js';
 
 const sleep = util.promisify(setTimeout);
 
-async function check(url, expected) {
-  const checkRes = await fetch(url);
+async function check(tenant, mode, suffix, expected) {
+  const checkRes = await fetch(`https://api.experiencecloud.live/delivery/${tenant}/${mode}/${suffix}`, {
+    headers: {
+      'x-api-key': process.env.EXPERIENCE_CLOUD_TOKEN,
+    },
+  });
   if (checkRes.status !== expected) {
     await sleep(1000);
-    await check(url, expected);
+    await check(tenant, mode, suffix, expected);
   }
 }
 
 createTargets().forEach((target) => {
   describe(`Post-Deploy Tests (${target.title()})`, () => {
     const fetchContext = noCache();
-    const { fetch } = fetchContext;
 
     afterEach(() => {
       fetchContext.reset();
@@ -57,28 +60,37 @@ createTargets().forEach((target) => {
     }).timeout(50000);
 
     it('re-store sample in preview', async () => {
+      const tenant = 'localhost';
+      const mode = 'live';
+      const relPath = 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT';
       const evictRes = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
-        body: {
-          tenant: 'localhost',
-          action: 'evict',
-          relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
-          mode: 'live',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          tenant,
+          action: 'evict',
+          relPath,
+          mode,
+        }),
       });
       assert.strictEqual(evictRes.status, 200);
-      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json', 404);
+      await check(tenant, mode, `${relPath}.cfm.gql.json`, 404);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
-        body: {
-          tenant: 'localhost',
-          action: 'store',
-          relPath: 'ccsurfaces/AppCatalog/en_US/appsPDP/AEFT',
-          mode: 'live',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          tenant,
+          action: 'store',
+          relPath,
+          mode,
+        }),
       });
       assert.strictEqual(res.status, 200);
-      await check('https://dev-odin.adobe.com/content/dam/ccsurfaces/AppCatalog/en_US/appsPDP/AEFT.cfm.gql.json', 200);
+      await check(tenant, mode, `${relPath}.cfm.gql.json`, 200);
     }).timeout(50000);
   });
 });
