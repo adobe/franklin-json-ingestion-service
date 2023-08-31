@@ -14,10 +14,12 @@ import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import Storage from './storage.js';
-import { renderFullyHydrated } from './fullyhydrated.js';
 import RequestUtil from './request-util.js';
-import InvalidateClient from './invalidate-client.js';
-import { cleanupVariations, extractVariations } from './utils.js';
+import {
+  cloneObject, processSequence,
+  validSettings,
+} from './utils.js';
+import { sendMessage, processMessage } from './sqs-util.js';
 
 /**
  * This is the main function
@@ -25,7 +27,10 @@ import { cleanupVariations, extractVariations } from './utils.js';
  * @param {UniversalContext} context the context of the universal serverless function
  * @returns {Response} a response
  */
-async function run(request, context) {
+
+const cachedSettings = {};
+
+async function httpHandler(request, context) {
   const requestUtil = new RequestUtil(request);
   await requestUtil.validate();
 
@@ -33,83 +38,37 @@ async function run(request, context) {
     return new Response(requestUtil.errorMessage, { status: requestUtil.errorStatusCode });
   }
 
-  const {
-    action, mode, selector, tenant, relPath, payload, variation, keptVariations,
-  } = requestUtil;
+  const { action, payload, tenant } = requestUtil;
 
   const storage = new Storage(context);
-  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
-  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
-  const selection = selector ? `.${selector}` : '';
-  const suffix = variation ? `/variations/${variation}` : '';
-
-  if (action === 'store') {
-    if (mode === 'live') {
-      const sourceKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-      const targetKey = `${s3LiveObjectPath}${selection}.json${suffix}`;
-      const k = await storage.copyKey(
-        sourceKey,
-        targetKey,
-      );
-      context.log.info(`copyKey from ${sourceKey} to ${targetKey} success`);
-      if (selector === 'franklin') {
-        // generate the fully hydrated right after
-        await renderFullyHydrated(context, s3LiveObjectPath, variation);
-      }
-      await new InvalidateClient(context).invalidate(`${s3LiveObjectPath}${selection}.json`, variation);
-      return new Response(`${k} stored`);
-    } else {
-      // store to preview
-      const storedKey = `${s3PreviewObjectPath}${selection}.json${suffix}`;
-      const k = await storage.putKey(
-        storedKey,
-        payload,
-        variation,
-      );
-      context.log.info(`putKey ${storedKey} success`);
-      if (selector === 'franklin') {
-        // generate the fully hydrated right after
-        await renderFullyHydrated(context, s3PreviewObjectPath, variation);
-      }
-      await new InvalidateClient(context).invalidate(`${s3PreviewObjectPath}${selection}.json`, variation);
-      return new Response(`${k} stored`);
-    }
-  } else if (action === 'touch') {
-    const baseKey = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-    if (selector === 'franklin') {
-      // generate the fully hydrated right after
-      await renderFullyHydrated(context, baseKey, variation);
-    }
-    return new Response(`${baseKey} touched`);
-  } else if (action === 'cleanup') {
-    const s3ObjectPath = mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
-    const evictedVariationsKeys = await cleanupVariations(storage, s3ObjectPath, `${selection}.json`, keptVariations);
-    await new InvalidateClient(context).invalidateVariations(
-      `${s3ObjectPath}${selection}.json`,
-      extractVariations(evictedVariationsKeys, selection),
-    );
-    if (evictedVariationsKeys.length > 0) {
-      return new Response(`${evictedVariationsKeys.map((i) => i.Key).join(',')} evicted`);
-    } else {
-      return new Response('no variations found, so nothing to got evicted');
-    }
+  if (action === 'store' || action === 'evict') {
+    await sendMessage(context, requestUtil.toMessage());
+    return new Response(`processing ${action} in background`);
   } else {
-    const removePreview = mode === 'preview';
-    const removeLive = mode === 'live' || mode === 'preview';
-    const evictedKeys = [];
-    if (removeLive) {
-      evictedKeys.push(...await storage.evictKeys(s3LiveObjectPath, `${selection}.json`));
+    const key = `${tenant}/settings.json`;
+    if (payload && validSettings(payload)) {
+      await storage.putKey(key, payload);
+      context.cachedSettings[tenant] = payload;
+      return new Response(`settings stored under ${key}`);
+    } else {
+      return new Response('Invalid settings value', { status: 400 });
     }
-    if (removePreview) {
-      evictedKeys.push(...await storage.evictKeys(s3PreviewObjectPath, `${selection}.json`));
-    }
-    if (selection) {
-      await new InvalidateClient(context).invalidateAll(
-        evictedKeys,
-        selection,
-      );
-    }
-    return new Response(`${evictedKeys.map((i) => i.Key).join(',')} evicted`);
+  }
+}
+
+async function run(event, context) {
+  const { records } = context;
+  // attach cachedSettings to context so it can be access by other functions
+  context.cachedSettings = cachedSettings;
+  if (records) {
+    // invoked by SQS trigger, with configured timeout
+    // order matter here, we need to process records in order
+    await processSequence(cloneObject(records), async (record) => {
+      await processMessage(context, JSON.parse(record.body));
+    });
+    return new Response('ok');
+  } else {
+    return httpHandler(event, context);
   }
 }
 

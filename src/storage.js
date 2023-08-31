@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import {
-  CopyObjectCommand, GetObjectCommand,
-  ListObjectsV2Command,
+  ListObjectsV2Command, GetObjectCommand,
   PutObjectCommand,
   S3Client, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
@@ -22,8 +21,11 @@ export default class Storage {
   constructor(context) {
     this.context = context || { log: console };
     const s3Config = {
-      endpoint: process.env.AWS_ENDPOINT_URL || undefined,
+      endpoint: process.env.AWS_ENDPOINT_URL,
     };
+    if (s3Config.endpoint && s3Config.endpoint.indexOf('//localhost:') > 0) {
+      s3Config.forcePathStyle = true;
+    }
     this.s3 = new S3Client(s3Config);
     this.bucket = process.env.AWS_BUCKET || DEFAULT_BUCKET;
     this.context.log.info(`Using Bucket=${this.bucket}`);
@@ -46,10 +48,13 @@ export default class Storage {
       Body: JSON.stringify(payload),
       Key: key,
       ContentType: 'application/json;charset=utf-8',
-      Metadata: {
-        variation,
-      },
     });
+
+    if (variation) {
+      params.Metadata = {
+        variation,
+      };
+    }
 
     try {
       await this.s3.send(new PutObjectCommand(params));
@@ -77,21 +82,6 @@ export default class Storage {
     }
   }
 
-  async copyKey(sourceKey, targetKey) {
-    const params = this.buildDefaultParams({
-      CopySource: `${this.bucket}/${sourceKey}`,
-      Key: targetKey,
-    });
-    try {
-      await this.s3.send(new CopyObjectCommand(params));
-      return targetKey;
-    } catch (err) {
-      throw new Error(
-        `An error occurred while trying to copy ${sourceKey} to ${targetKey} in S3 bucket due to ${err.message}`,
-      );
-    }
-  }
-
   async listKeys(prefix) {
     let ContinuationToken;
     const objects = [];
@@ -109,9 +99,9 @@ export default class Storage {
     return objects;
   }
 
-  async evictKeys(key, suffix) {
+  async evictKeys(key) {
     try {
-      const keyWithSuffix = `${key}${suffix}`;
+      const keyWithSuffix = `${key}.cfm.gql.json`;
       const list1 = await this.listKeys(`${key}/`);
       const list2 = await this.listKeys(`${keyWithSuffix}/`);
       const deletedKeys = [

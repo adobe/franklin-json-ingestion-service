@@ -10,20 +10,21 @@
  * governing permissions and limitations under the License.
  */
 /* eslint-env mocha */
-import {
-  S3Client,
-  ListObjectsV2Command, DeleteObjectsCommand,
-} from '@aws-sdk/client-s3';
-import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
-import Storage from '../src/storage.js';
+import nock from 'nock';
 import {
   collectReferences,
   createReferenceToObjectMapping,
   extractCFReferencesProperties,
   replaceRefsWithObject,
   filterVariationsKeys,
-  cleanupVariations, extractVariations, extractVariation, extractRootKey,
+  extractVariations,
+  extractVariation,
+  extractRootKey,
+  collectVariations,
+  sendSlackMessage,
+  processSequence,
+  cloneObject, extractS3ObjectPath,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -191,33 +192,15 @@ describe('Utils Tests', () => {
     const test6 = filterVariationsKeys([{ notKey: '/a/b/c' }], ['var1', 'var3']);
     assert.strictEqual(JSON.stringify(test6), JSON.stringify([]));
   });
-  it('cleanupVariations', async () => {
-    const s3Mock = mockClient(S3Client);
-    s3Mock.on(ListObjectsV2Command, {
-      Bucket: 'franklin-content-bus-headless',
-      Prefix: 'local/preview/a/b/c.cfm.gql.json/variations/',
-    }).resolves({
-      IsTruncated: false,
-      Contents: [
-        { Key: 'local/preview/a/b/c.cfm.gql.json/variations/var1' },
-        { Key: 'local/preview/a/b/c.cfm.gql.json/variations/var2' },
-        { Key: 'local/preview/a/b/c.cfm.gql.json/variations/var3' },
-      ],
-    });
-    const evictedList = await cleanupVariations(new Storage(), 'local/preview/a/b/c', '.cfm.gql.json', ['var1', 'var3']);
-    assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 1);
-    assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
-    assert.strictEqual(JSON.stringify(evictedList), JSON.stringify([{ Key: 'local/preview/a/b/c.cfm.gql.json/variations/var2' }]));
-  });
   it('extractPrefix', () => {
-    assert.strictEqual(extractVariation('local/preview/a/b/c.cfm.gql.json', '.cfm.gql'), null);
-    assert.strictEqual(extractVariation('local/preview/a/b/c.cfm.gql.json/variations/var1', '.cfm.gql'), 'var1');
-    assert.strictEqual(extractVariation('local/preview/a/b/c', '.cfm.gql'), null);
+    assert.strictEqual(extractVariation('local/preview/a/b/c.cfm.gql.json'), null);
+    assert.strictEqual(extractVariation('local/preview/a/b/c.cfm.gql.json/variations/var1'), 'var1');
+    assert.strictEqual(extractVariation('local/preview/a/b/c'), null);
   });
   it('extractVariation', async () => {
-    assert.strictEqual(extractRootKey('local/preview/a/b/c.cfm.gql.json', '.cfm.gql'), 'local/preview/a/b/c.cfm.gql.json');
-    assert.strictEqual(extractRootKey('local/preview/a/b/c.cfm.gql.json/variations/var1', '.cfm.gql'), 'local/preview/a/b/c.cfm.gql.json');
-    assert.strictEqual(extractRootKey('local/preview/a/b/c', '.cfm.gql'), null);
+    assert.strictEqual(extractRootKey('local/preview/a/b/c.cfm.gql.json'), 'local/preview/a/b/c.cfm.gql.json');
+    assert.strictEqual(extractRootKey('local/preview/a/b/c.cfm.gql.json/variations/var1'), 'local/preview/a/b/c.cfm.gql.json');
+    assert.strictEqual(extractRootKey('local/preview/a/b/c'), null);
   });
   it('extractVariations', async () => {
     const s3Keys = [
@@ -226,7 +209,72 @@ describe('Utils Tests', () => {
       { Key: 'local/preview/a/b/c.cfm.gql.json' },
       { notKey: 'local/preview/a/b/c.cfm.gql.json/variations/var5' },
     ];
-    const variations = await extractVariations(s3Keys, '.cfm.gql');
+    const variations = await extractVariations(s3Keys);
     assert.strictEqual(JSON.stringify(variations), JSON.stringify(['var1', 'var2']));
+  });
+  it('collectVariations', async () => {
+    const variations = Array.from(collectVariations({
+      data: {
+        _variations: [
+          'var1',
+          'var3',
+        ],
+        nested: {
+          _variations: [
+            'var5',
+          ],
+          multiple: [
+            {
+              _variations: ['var2'],
+            },
+            {
+              _variations: ['var4'],
+            },
+          ],
+        },
+      },
+    })).sort();
+    assert.deepStrictEqual(variations, ['var1', 'var2', 'var3', 'var4', 'var5']);
+  });
+  it('processSequence', async () => {
+    const sequence = [4, 2, 6, 7];
+    const result = [];
+    const input = cloneObject(sequence);
+    await processSequence(input, async (item) => {
+      result.push(item);
+    });
+    assert.deepStrictEqual(result, sequence);
+    assert.deepStrictEqual(input, []);
+  });
+  it('extractS3ObjectPath', async () => {
+    assert.strictEqual(extractS3ObjectPath({
+      tenant: 'local',
+      mode: 'preview',
+      relPath: 'a/b/c',
+    }), 'local/preview/a/b/c');
+    assert.strictEqual(extractS3ObjectPath({
+      tenant: 'local',
+      mode: 'live',
+      relPath: 'a/b/c',
+    }), 'local/live/a/b/c');
+  });
+  it('sendSlackMessage with settings', async () => {
+    nock('http://slackcloudservice', {
+      reqheaders: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer dummyToken',
+      },
+    }).post('/api/chat.postMessage', (requestBody) => {
+      assert.strictEqual(requestBody.channel, 'dummyChannelId');
+      assert.strictEqual(requestBody.blocks[0].text.text, 'dummyMessage');
+      return true;
+    }).reply(200, { ok: true });
+    assert.strictEqual(await sendSlackMessage({
+      slackChannelId: 'dummyChannelId',
+      slackToken: 'dummyToken',
+    }, 'dummyMessage'), true);
+  });
+  it('sendSlackMessage without settings', async () => {
+    assert.strictEqual(await sendSlackMessage(null, 'dummyMessage'), false);
   });
 });
