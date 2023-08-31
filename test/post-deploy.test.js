@@ -12,9 +12,12 @@
 
 /* eslint-env mocha */
 import assert from 'assert';
-import { noCache, fetch } from '@adobe/fetch';
+import { noCache } from '@adobe/fetch';
 import util from 'util';
 import { createTargets } from './post-deploy-utils.js';
+
+const fetchContext = noCache();
+const { fetch } = fetchContext;
 
 const sleep = util.promisify(setTimeout);
 const MAX_RETRIES = 50;
@@ -37,11 +40,10 @@ async function check(tenant, mode, suffix, expected, retries) {
 
 createTargets().forEach((target) => {
   describe(`Post-Deploy Tests (${target.title()})`, () => {
-    const fetchContext = noCache();
     console.log('using', target.host(), target.urlPath());
 
-    afterEach(() => {
-      fetchContext.reset();
+    afterEach(async() => {
+      await fetchContext.reset();
     });
 
     it('returns the status of the function', async () => {
