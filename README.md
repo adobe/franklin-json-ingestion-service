@@ -41,6 +41,31 @@ $ npm start
 This starts a server at http://localhost:3000/. The node process is started with `--inspect` and you can
 attach a debugger if needed.
 
+### Run using localstack
+
+You can also run with localstack to test the AWS Lambda integration locally. To do so, you need to install docker and docker-compose. Then you can run:
+
+```
+npm run deploy-localstack
+```
+
+which will prepare the files so it can work using localstack. Then you can run:
+
+```
+docker-compose up
+```
+
+It will make the deployed lambda function available at http://localhost:4566/restapis/testing/dev/_user_request_/endpoint
+
+An sqs and s3 bucket is also then created and can be used to test the lambda function.
+
+to tear down the stack, run:
+
+```
+docker-compose down
+```
+
+
 ### Deploying Franklin JSON Ingestion Service
 
 All commits to main that pass the testing will be deployed automatically. All commits to branches that will pass the testing will get commited as `/helix-services/service@ci<num>` and tagged with the CI build number.
