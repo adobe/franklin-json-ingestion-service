@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import { SQS } from '@aws-sdk/client-sqs';
+import * as crypto from 'crypto';
 import processQueue from '@adobe/helix-shared-process-queue';
 import Storage from './storage.js';
 import { cloneObject, extractS3ObjectPath, sendSlackMessage } from './utils.js';
@@ -25,6 +26,7 @@ export async function sendMessage(context, message) {
   const params = {
     QueueUrl: process.env.SQS_QUEUE_URL,
     MessageBody: JSON.stringify(message),
+    MessageDeduplicationId: crypto.randomUUID(),
     MessageGroupId: 'franklin-ingestor',
   };
   await sqs.sendMessage(params);
