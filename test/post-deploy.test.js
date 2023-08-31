@@ -20,7 +20,7 @@ const sleep = util.promisify(setTimeout);
 
 async function check(tenant, mode, suffix, expected) {
   const checkRes = await fetch(`https://api.experiencecloud.live/delivery/${tenant}/${mode}/${suffix}`, {
-    cache: "no-store",
+    cache: 'no-store',
     headers: {
       'x-api-key': process.env.EXPERIENCE_CLOUD_TOKEN,
     },
