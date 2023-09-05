@@ -35,6 +35,9 @@ export default class PullingClient {
     if (response.status === 200) {
       this.context.log.info(`pulling content from ${url} success`);
       content = await response.json();
+    } else if (response.status === 404) {
+      this.context.log.info(`pulling content from ${url} failed due to ${response.status} code, skipping`);
+      return null;
     } else {
       this.context.log.info(`pulling content from ${url} failed due to ${response.status} code`);
       throw new Error(`Pulling content failed for ${url} due to ${response.status} code`);

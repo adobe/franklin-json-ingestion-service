@@ -49,10 +49,18 @@ describe('PullingClient Tests', () => {
       .pullContent('ccsurfaces/en_US/landing-page', 'myvar');
     assert.deepStrictEqual(result, responseData);
   });
-  it('pullContent failed', async () => {
+  it('pullContent failed on 404', async () => {
     nock('http://localhost')
       .get(/\/content\/dam\/ccsurfaces\/en_US\/landing-page.cfm.gql.json\?ck=.*/)
       .reply(404, {});
+    const data = await new PullingClient({ log: console }, 'http://localhost')
+      .pullContent('ccsurfaces/en_US/landing-page');
+    assert.strictEqual(data, null);
+  });
+  it('pullContent failed on 500', async () => {
+    nock('http://localhost')
+      .get(/\/content\/dam\/ccsurfaces\/en_US\/landing-page.cfm.gql.json\?ck=.*/)
+      .reply(500, {});
     await assert.rejects(async () => {
       await new PullingClient({ log: console }, 'http://localhost')
         .pullContent('ccsurfaces/en_US/landing-page');
