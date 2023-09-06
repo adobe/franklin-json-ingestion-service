@@ -18,7 +18,7 @@
     "deploy-localstack": "hedy -v; node ./test/aws/localstack-fix.js",
     "deploy": "hedy -v --deploy --test",
     "deploy-routes": "hedy --no-build --no-hints -l major",
-    "deploy-ci": "hedy -v --deploy --test --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci --cleanup-ci 24h --timeout 180000",
+    "deploy-ci": "hedy -v --deploy --test --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci --cleanup-ci 24h --timeout 300000 --memory 2048",
     "prepare": "husky install"
   },
   "wsk": {
