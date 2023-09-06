@@ -18,7 +18,7 @@ import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
 import VariationsUtil from './variations-util.js';
 
-export async function sendMessage(groupId, message) {
+export async function sendMessage(message, groupId) {
   const sqs = new SQS({
     region: process.env.AWS_REGION,
     endpoint: process.env.AWS_ENDPOINT_URL,
