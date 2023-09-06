@@ -38,11 +38,13 @@ async function httpHandler(request, context) {
     return new Response(requestUtil.errorMessage, { status: requestUtil.errorStatusCode });
   }
 
-  const { action, payload, tenant } = requestUtil;
+  const {
+    action, payload, tenant, mode,
+  } = requestUtil;
 
   const storage = new Storage(context);
   if (action === 'store' || action === 'evict') {
-    await sendMessage(context, requestUtil.toMessage());
+    await sendMessage(requestUtil.toMessage(), `${tenant}-${mode}`);
     return new Response(`processing ${action} in background`);
   } else {
     const key = `${tenant}/settings.json`;

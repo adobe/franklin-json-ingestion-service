@@ -18,7 +18,7 @@ import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
 import VariationsUtil from './variations-util.js';
 
-export async function sendMessage(context, message) {
+export async function sendMessage(groupId, message) {
   const sqs = new SQS({
     region: process.env.AWS_REGION,
     endpoint: process.env.AWS_ENDPOINT_URL,
@@ -27,7 +27,7 @@ export async function sendMessage(context, message) {
     QueueUrl: process.env.SQS_QUEUE_URL,
     MessageBody: JSON.stringify(message),
     MessageDeduplicationId: crypto.randomUUID(),
-    MessageGroupId: 'franklin-ingestor',
+    MessageGroupId: groupId,
   };
   await sqs.sendMessage(params);
 }
