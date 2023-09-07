@@ -101,6 +101,6 @@ createTargets().forEach((target) => {
       await check(tenant, mode, `${relPath}.cfm.gql.json`, 200, MAX_RETRIES);
       await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 200, MAX_RETRIES);
       await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 200, MAX_RETRIES);
-    }).timeout(50000);
+    }).timeout(120000); // it needs a bit of time to process sqs message in background
   });
 });
