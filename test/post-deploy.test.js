@@ -20,7 +20,7 @@ const fetchContext = noCache();
 const { fetch } = fetchContext;
 
 const sleep = util.promisify(setTimeout);
-const MAX_RETRIES = 50;
+const MAX_RETRIES = 120;
 
 async function check(tenant, mode, suffix, expected, retries) {
   if (retries < 0) {
