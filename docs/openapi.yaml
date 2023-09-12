@@ -61,6 +61,10 @@ components:
                 description: |
                   Define the relative path under the tenant / mode folder.
                 example: a/b/c
+              silent:
+                type: boolean
+                description: Optional, if true, turn off notification for this operation.
+                example: true
               payload:
                 type: string
                 description: Optional (only for settings operation), Json string representation to be stored as json file.

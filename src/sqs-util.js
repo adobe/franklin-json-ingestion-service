@@ -34,7 +34,7 @@ export async function sendMessage(message, groupId) {
 
 export async function processMessage(context, message) {
   const {
-    action, mode, tenant, relPath, variation,
+    action, mode, tenant, relPath, variation, silent,
   } = message;
 
   const storage = new Storage(context);
@@ -79,7 +79,9 @@ export async function processMessage(context, message) {
       const varSelector = variation ? `${variation}.` : '';
       const varMessage = variation ? ` for variation ${variation}` : '';
       const url = `${settings[mode].external}/content/dam/${relPath}.cfm.gql.${varSelector}json`;
-      await sendSlackMessage(context.cachedSettings[tenant], `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`);
+      if (!silent) {
+        await sendSlackMessage(context.cachedSettings[tenant], `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`);
+      }
     } else {
       context.log.info('Content is null due to previous error, skipped');
     }
