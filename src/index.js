@@ -39,13 +39,19 @@ async function httpHandler(request, context) {
   }
 
   const {
-    action, payload, tenant, mode,
+    action, payload, tenant, mode, variation,
   } = requestUtil;
 
   const storage = new Storage(context);
   if (action === 'store' || action === 'evict') {
-    await sendMessage(requestUtil.toMessage(), `${tenant}-${mode}`);
-    return new Response(`processing ${action} in background`);
+    if (!variation) {
+      await sendMessage(requestUtil.toMessage(), `${tenant}-${mode}`);
+      return new Response(`processing ${action} in background`);
+    } else {
+      return new Response('parameter variation is deprecated, ignoring request now');
+    }
+  } else if (action === 'cleanup') {
+    return new Response('cleanup is deprecated, ignored for now');
   } else {
     const key = `${tenant}/settings.json`;
     if (payload && validSettings(payload)) {

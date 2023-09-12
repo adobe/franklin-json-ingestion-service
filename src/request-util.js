@@ -14,7 +14,7 @@ import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
 
 const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict', 'settings'];
+const VALID_ACTIONS = ['store', 'evict', 'settings', 'cleanup'];
 const VALID_METHODS = ['POST'];
 
 const gunzip = promisify(zlib.gunzip);

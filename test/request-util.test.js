@@ -155,7 +155,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters action value, accept:store,evict,settings');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameters action value, accept:store,evict,settings,cleanup');
   });
   it('fails on invalid tenant value', async () => {
     const reqUtil = new RequestUtil(

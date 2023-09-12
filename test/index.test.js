@@ -107,6 +107,44 @@ describe('Index Tests', () => {
     });
     assert.deepStrictEqual(response.status, 200);
   });
+  it('ignore cleanup', async () => {
+    const response = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            action: 'cleanup',
+            tenant: 'local',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.deepStrictEqual(response.status, 200);
+    assert.deepStrictEqual(await response.text(), 'cleanup is deprecated, ignored for now');
+  });
+  it('ignore variation parameter', async () => {
+    const response = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            action: 'store',
+            tenant: 'local',
+            variation: 'var1',
+            relPath: 'a/b/c',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.deepStrictEqual(response.status, 200);
+    assert.deepStrictEqual(await response.text(), 'parameter variation is deprecated, ignoring request now');
+  });
   it('stores in preview as implicit operation', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
