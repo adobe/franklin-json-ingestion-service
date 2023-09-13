@@ -13,10 +13,14 @@ import { SQS } from '@aws-sdk/client-sqs';
 import * as crypto from 'crypto';
 import processQueue from '@adobe/helix-shared-process-queue';
 import Storage from './storage.js';
-import { cloneObject, extractS3ObjectPath, sendSlackMessage } from './utils.js';
+import {
+  cloneObject, createConversation, extractS3ObjectPath, isValidEmail, sendSlackMessage,
+} from './utils.js';
 import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
 import VariationsUtil from './variations-util.js';
+
+const conversationIdCache = {};
 
 export async function sendMessage(message, groupId) {
   const sqs = new SQS({
@@ -34,7 +38,7 @@ export async function sendMessage(message, groupId) {
 
 export async function processMessage(context, message) {
   const {
-    action, mode, tenant, relPath, variation, silent,
+    action, mode, tenant, relPath, variation, initiator,
   } = message;
 
   const storage = new Storage(context);
@@ -79,8 +83,18 @@ export async function processMessage(context, message) {
       const varSelector = variation ? `${variation}.` : '';
       const varMessage = variation ? ` for variation ${variation}` : '';
       const url = `${settings[mode].external}/content/dam/${relPath}.cfm.gql.${varSelector}json`;
-      if (!silent) {
-        await sendSlackMessage(context.cachedSettings[tenant], `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`);
+      if (isValidEmail(initiator)) {
+        const { slackToken, slackChannel } = context.cachedSettings[tenant];
+        let slackChannelId = slackChannel || conversationIdCache[initiator];
+        if (!slackChannelId) {
+          slackChannelId = createConversation(slackToken, initiator);
+          conversationIdCache[initiator] = slackChannelId;
+        }
+        await sendSlackMessage(
+          slackToken,
+          slackChannelId,
+          `Fully hydrated json <${url}|${relPath}> is ready to view in ${mode} mode${varMessage}`,
+        );
       }
     } else {
       context.log.info('Content is null due to previous error, skipped');

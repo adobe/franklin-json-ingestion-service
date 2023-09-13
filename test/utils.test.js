@@ -24,7 +24,7 @@ import {
   collectVariations,
   sendSlackMessage,
   processSequence,
-  cloneObject, extractS3ObjectPath,
+  cloneObject, extractS3ObjectPath, isValidEmail, createConversation,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -269,12 +269,26 @@ describe('Utils Tests', () => {
       assert.strictEqual(requestBody.blocks[0].text.text, 'dummyMessage');
       return true;
     }).reply(200, { ok: true });
-    assert.strictEqual(await sendSlackMessage({
-      slackChannelId: 'dummyChannelId',
-      slackToken: 'dummyToken',
-    }, 'dummyMessage'), true);
+    assert.strictEqual(await sendSlackMessage('dummyToken', 'dummyChannelId', 'dummyMessage'), true);
   });
   it('sendSlackMessage without settings', async () => {
     assert.strictEqual(await sendSlackMessage(null, 'dummyMessage'), false);
+  });
+  it('isValidEmail with valid email', async () => {
+    assert.strictEqual(isValidEmail(''), false);
+    assert.strictEqual(isValidEmail('@'), false);
+    assert.strictEqual(isValidEmail(), false);
+    assert.strictEqual(isValidEmail('a'), false);
+    assert.strictEqual(isValidEmail('a@b'), true);
+  });
+  it('createConversation cases', async () => {
+    assert.strictEqual(await createConversation(null, 'invalid'), null);
+    nock('http://slackcloudservice')
+      .get('/api/users.lookupByEmail?email=a@b')
+      .reply(200, { ok: true, user: { id: 'dummyId' } });
+    nock('http://slackcloudservice')
+      .post('/api/conversations.open')
+      .reply(200, { ok: true, channel: { id: 'dummyChannelId' } });
+    assert.strictEqual(await createConversation('dummyToken', 'a@b'), 'dummyChannelId');
   });
 });

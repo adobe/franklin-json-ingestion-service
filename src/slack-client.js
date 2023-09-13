@@ -47,6 +47,41 @@ export default class SlackClient {
     }
   }
 
+  async createConversation(userId) {
+    const url = `${this.baseURL}/api/conversations.open`;
+    const headers = this.buildDefaultHeaders();
+    const body = {
+      users: userId,
+    };
+    const response = await fetch(url, { method: 'POST', headers, body });
+    if (response.status === 200) {
+      const data = await response.json();
+      if (!data.ok) {
+        throw new Error(`Error while doing call to create conversation with: ${userId} due to ${data.error}`);
+      } else {
+        return data.channel.id;
+      }
+    } else {
+      throw new Error(`Error while doing call to create conversation with: ${userId} due to ${response.statusText}`);
+    }
+  }
+
+  async findUserId(email) {
+    const url = `${this.baseURL}/api/users.lookupByEmail?email=${email}`;
+    const headers = this.buildDefaultHeaders();
+    const response = await fetch(url, { method: 'GET', headers });
+    if (response.status === 200) {
+      const data = await response.json();
+      if (!data.ok) {
+        throw new Error(`Error while doing call to findUserId with: ${email} due to ${data.error}`);
+      } else {
+        return data.user.id;
+      }
+    } else {
+      throw new Error(`Error while doing call to findUserId with: ${email} due to ${response.statusText}`);
+    }
+  }
+
   buildDefaultHeaders() {
     return {
       'Content-Type': 'application/json',

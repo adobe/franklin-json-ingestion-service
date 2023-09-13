@@ -80,6 +80,7 @@ describe('SQS Util Tests', () => {
       relPath: 'a/b/c',
       mode: 'preview',
       action: 'store',
+      initiator: 'a@b',
     });
     assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);

@@ -61,4 +61,76 @@ describe('SlackClient Tests', () => {
       });
     });
   });
+  describe('findUserId', () => {
+    it('success', async () => {
+      nock('http://slackcloudservice')
+        .get('/api/users.lookupByEmail?email=a@b')
+        .reply(200, { ok: true, user: { id: 'dummyId' } });
+      await new SlackClient('http://slackcloudservice', 'dummyToken')
+        .findUserId('a@b');
+    });
+    it('fail on 500', async () => {
+      nock('http://slackcloudservice')
+        .get('/api/users.lookupByEmail?email=a@b')
+        .reply(500, 'issue trying to postmessage');
+      await assert.rejects(async () => {
+        await new SlackClient('http://slackcloudservice', 'dummyToken')
+          .findUserId('a@b');
+      }, {
+        message: /Error while doing call to findUserId with: a@b due to .*/,
+        name: 'Error',
+      });
+    });
+    it('fail on not ok', async () => {
+      nock('http://slackcloudservice')
+        .get('/api/users.lookupByEmail?email=a@b')
+        .reply(200, {
+          ok: false,
+          error: 'unknown user',
+        });
+      await assert.rejects(async () => {
+        await new SlackClient('http://slackcloudservice', 'dummyToken')
+          .findUserId('a@b');
+      }, {
+        message: /Error while doing call to findUserId with: a@b due to unknown user/,
+        name: 'Error',
+      });
+    });
+  });
+  describe('createConversation', () => {
+    it('success', async () => {
+      nock('http://slackcloudservice')
+        .post('/api/conversations.open')
+        .reply(200, { ok: true, channel: { id: 'dummyChannelId' } });
+      await new SlackClient('http://slackcloudservice', 'dummyToken')
+        .createConversation('dummyUserId');
+    });
+    it('fail on 500', async () => {
+      nock('http://slackcloudservice')
+        .post('/api/conversations.open')
+        .reply(500, 'issue trying to postmessage');
+      await assert.rejects(async () => {
+        await new SlackClient('http://slackcloudservice', 'dummyToken')
+          .createConversation('dummyUserId');
+      }, {
+        message: /Error while doing call to create conversation with: dummyUserId due to .*/,
+        name: 'Error',
+      });
+    });
+    it('fail on not ok', async () => {
+      nock('http://slackcloudservice')
+        .post('/api/conversations.open')
+        .reply(200, {
+          ok: false,
+          error: 'unknown userId',
+        });
+      await assert.rejects(async () => {
+        await new SlackClient('http://slackcloudservice', 'dummyToken')
+          .createConversation('dummyUserId');
+      }, {
+        message: /Error while doing call to create conversation with: dummyUserId due to unknown userId/,
+        name: 'Error',
+      });
+    });
+  });
 });

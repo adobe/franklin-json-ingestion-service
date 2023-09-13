@@ -115,17 +115,27 @@ export function extractVariation(key) {
   return idx >= 0 ? `${key.substring(idx + pattern.length)}` : null;
 }
 
-export async function sendSlackMessage(options, message) {
-  const settings = options || {};
-  const { slackToken } = settings;
-  const { slackChannelId } = settings;
-  if (slackToken && slackChannelId) {
+export async function sendSlackMessage(slackToken, channelId, message) {
+  if (slackToken && channelId) {
     await new SlackClient(SLACK_URL, slackToken)
-      .postMessage(slackChannelId, message);
+      .postMessage(channelId, message);
     return true;
   } else {
     return false;
   }
+}
+
+export function isValidEmail(email) {
+  return /^[^@]+@[^@]+$/.test(email);
+}
+
+export async function createConversation(slackToken, email) {
+  if (slackToken && isValidEmail(email)) {
+    const slackClient = new SlackClient(SLACK_URL, slackToken);
+    const userId = await slackClient.findUserId(email);
+    return slackClient.createConversation(userId);
+  }
+  return null;
 }
 
 export function extractVariations(s3Keys) {

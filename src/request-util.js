@@ -34,7 +34,7 @@ export default class RequestUtil {
       tenant: this.tenant,
       relPath: this.relPath,
       variation: this.variation,
-      silent: this.silent,
+      initiator: this.initiator,
     };
     return message;
   }
@@ -91,7 +91,7 @@ export default class RequestUtil {
     }
     this.variation = this.json.variation;
     this.payload = this.json.payload;
-    this.silent = this.json.silent;
+    this.initiator = this.json.initiator;
     this.isValid = true;
   }
 }
