@@ -50,7 +50,7 @@ async function httpHandler(request, context) {
       const paths = Array.isArray(relPath) ? relPath : [relPath];
       const queue = paths.map((path, index) => ({ path, index: index % MAX_PARALLEL }));
       await processQueue(queue, async (params) => {
-        await sendMessage(requestUtil.toMessage(), `${tenant}-${mode}-${params.index}`);
+        await sendMessage(requestUtil.toMessage(params.path), `${tenant}-${mode}-${params.index}`);
       });
       return new Response(`processing ${action} in background`);
     } else {
