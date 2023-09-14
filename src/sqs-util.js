@@ -87,9 +87,10 @@ export async function processMessage(context, message) {
         const { slackToken, slackChannel } = context.cachedSettings[tenant];
         let slackChannelId = slackChannel || conversationIdCache[initiator];
         if (!slackChannelId) {
-          slackChannelId = createConversation(slackToken, initiator);
+          slackChannelId = await createConversation(slackToken, initiator);
           conversationIdCache[initiator] = slackChannelId;
         }
+        context.log.info(`Sending slack message to ${slackChannelId}`);
         await sendSlackMessage(
           slackToken,
           slackChannelId,
