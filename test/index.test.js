@@ -107,6 +107,26 @@ describe('Index Tests', () => {
     });
     assert.deepStrictEqual(response.status, 200);
   });
+  it('process create parallel queue for array of relPath', async () => {
+    const response = await main(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': APPLICATION_JSON },
+          body: JSON.stringify({
+            action: 'store',
+            tenant: 'local',
+            relPath: ['a/b/c', 'a/b/d'],
+            mode: 'preview',
+          }),
+        },
+      ),
+      {},
+    );
+    assert.deepStrictEqual(response.status, 200);
+    assert.deepStrictEqual(await response.text(), 'processing store in background');
+  });
   it('ignore cleanup', async () => {
     const response = await main(
       new Request(

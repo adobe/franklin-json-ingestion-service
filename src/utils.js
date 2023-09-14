@@ -129,6 +129,24 @@ export function isValidEmail(email) {
   return /^[^@]+@[^@]+$/.test(email);
 }
 
+export function isValidRelPath(relPath) {
+  let isValid = false;
+  function validatePath(path) {
+    return typeof path === 'string' && path.indexOf('/') !== 0;
+  }
+  if (Array.isArray(relPath)) {
+    for (const path of relPath) {
+      isValid = validatePath(path);
+      if (!isValid) {
+        break;
+      }
+    }
+  } else {
+    isValid = validatePath(relPath);
+  }
+  return isValid;
+}
+
 export async function createConversation(slackToken, email) {
   if (slackToken && isValidEmail(email)) {
     const slackClient = new SlackClient(SLACK_URL, slackToken);

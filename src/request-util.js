@@ -12,6 +12,7 @@
 import { promisify } from 'util';
 import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
+import { isValidRelPath } from './utils.js';
 
 const VALID_MODES = ['preview', 'live'];
 const VALID_ACTIONS = ['store', 'evict', 'settings', 'cleanup'];
@@ -78,7 +79,7 @@ export default class RequestUtil {
 
     this.relPath = this.json.relPath;
     const checkRelPath = ['store', 'evict'].includes(this.action);
-    const relPathInvalid = !this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0;
+    const relPathInvalid = !isValidRelPath(this.relPath);
     if (checkRelPath && relPathInvalid) {
       this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;

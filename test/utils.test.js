@@ -24,7 +24,7 @@ import {
   collectVariations,
   sendSlackMessage,
   processSequence,
-  cloneObject, extractS3ObjectPath, isValidEmail, createConversation,
+  cloneObject, extractS3ObjectPath, isValidEmail, createConversation, isValidRelPath,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -290,5 +290,16 @@ describe('Utils Tests', () => {
       .post('/api/conversations.open')
       .reply(200, { ok: true, channel: { id: 'dummyChannelId' } });
     assert.strictEqual(await createConversation('dummyToken', 'a@b'), 'dummyChannelId');
+  });
+  it('isValidRelPath cases', () => {
+    assert.strictEqual(isValidRelPath(''), true);
+    assert.strictEqual(isValidRelPath('/a/b/c'), false);
+    assert.strictEqual(isValidRelPath(['a/b/c', 'a/b/d']), true);
+    assert.strictEqual(isValidRelPath(['/a/b/c', 'a/b/d']), false);
+    assert.strictEqual(isValidRelPath('abcd'), true);
+    assert.strictEqual(isValidRelPath(), false);
+    assert.strictEqual(isValidRelPath(1), false);
+    assert.strictEqual(isValidRelPath(true), false);
+    assert.strictEqual(isValidRelPath({}), false);
   });
 });
