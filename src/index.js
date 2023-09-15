@@ -13,14 +13,13 @@ import wrap from '@adobe/helix-shared-wrap';
 import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
-import processQueue from '@adobe/helix-shared-process-queue';
 import Storage from './storage.js';
 import RequestUtil from './request-util.js';
 import {
   cloneObject, processSequence,
   validSettings,
 } from './utils.js';
-import { sendMessage, processMessage } from './sqs-util.js';
+import { sendMessage, processParallelMessages } from './sqs-util.js';
 
 /**
  * This is the main function
@@ -30,7 +29,6 @@ import { sendMessage, processMessage } from './sqs-util.js';
  */
 
 const cachedSettings = {};
-const MAX_PARALLEL = 10;
 
 async function httpHandler(request, context) {
   const requestUtil = new RequestUtil(request);
@@ -41,17 +39,13 @@ async function httpHandler(request, context) {
   }
 
   const {
-    action, payload, tenant, mode, variation, relPath,
+    action, payload, tenant, mode, variation,
   } = requestUtil;
 
   const storage = new Storage(context);
   if (action === 'store' || action === 'evict') {
     if (!variation) {
-      const paths = Array.isArray(relPath) ? relPath : [relPath];
-      const queue = paths.map((path, index) => ({ path, index: index % MAX_PARALLEL }));
-      await processQueue(queue, async (params) => {
-        await sendMessage(requestUtil.toMessage(params.path), `${tenant}-${mode}-${params.index}`);
-      });
+      await sendMessage(requestUtil.toMessage(), `${tenant}-${mode}`);
       return new Response(`processing ${action} in background`);
     } else {
       return new Response('parameter variation is deprecated, ignoring request now');
@@ -78,7 +72,7 @@ async function run(event, context) {
     // invoked by SQS trigger, with configured timeout
     // order matter here, we need to process records in order
     await processSequence(cloneObject(records), async (record) => {
-      await processMessage(context, JSON.parse(record.body));
+      await processParallelMessages(context, JSON.parse(record.body));
     });
     return new Response('ok');
   } else {

@@ -28,12 +28,12 @@ export default class RequestUtil {
     this.errorStatusCode = 400;
   }
 
-  toMessage(relPath) {
+  toMessage() {
     const message = {
       action: this.action,
       mode: this.mode,
       tenant: this.tenant,
-      relPath,
+      relPath: this.relPath,
       variation: this.variation,
       initiator: this.initiator,
     };

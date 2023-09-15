@@ -15,6 +15,7 @@ import SlackClient from './slack-client.js';
 const SUFFIX = '.cfm.gql.json';
 /* c8 ignore next */
 const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';
+const MAX_PARALLEL = 10;
 
 export function cloneObject(object) {
   return JSON.parse(JSON.stringify(object));
@@ -206,4 +207,24 @@ export function extractS3ObjectPath(obj) {
   const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
   const s3LiveObjectPath = `${tenant}/live/${relPath}`;
   return mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
+}
+
+export function buildParallelQueues(message) {
+  const { relPath } = message;
+  const map = {};
+  const paths = Array.isArray(relPath) ? relPath : [relPath];
+  paths.forEach((path, index) => {
+    const parallelIndex = index % MAX_PARALLEL;
+    if (!map[parallelIndex]) {
+      map[parallelIndex] = [];
+    }
+    const parallelMessage = cloneObject(message);
+    parallelMessage.relPath = path;
+    map[parallelIndex].push(parallelMessage);
+  });
+  const queues = [];
+  for (const value of Object.values(map)) {
+    queues.push(value);
+  }
+  return queues;
 }

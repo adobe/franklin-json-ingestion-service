@@ -67,6 +67,12 @@ describe('Index Tests', () => {
         body: JSON.stringify({
           test: 'value',
         }),
+      })
+      .get(/\/content\/dam\/a\/b\/d.cfm.gql.json/)
+      .reply(200, {
+        body: JSON.stringify({
+          test: 'value',
+        }),
       });
     const s3Mock = mockClient(S3Client);
     s3Mock.on(GetObjectCommand)
@@ -85,7 +91,7 @@ describe('Index Tests', () => {
         },
       );
     s3Mock.on(ListObjectsV2Command)
-      .resolvesOnce({
+      .resolves({
         IsTruncated: false,
         Contents: [],
       });
@@ -100,7 +106,7 @@ describe('Index Tests', () => {
         body: JSON.stringify({
           action: 'store',
           tenant: 'local',
-          relPath: 'a/b/c',
+          relPath: ['a/b/c', 'a/b/d'],
           mode: 'preview',
         }),
       }],
