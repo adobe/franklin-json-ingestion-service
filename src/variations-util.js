@@ -25,7 +25,7 @@ export default class VariationsUtil {
   async process(data) {
     const s3ObjectPath = extractS3ObjectPath(this.message);
     const variations = Array.from(collectVariations(data));
-    // cleanup non existing variations
+    // cleanup non-existing variations
     const evictedVariationsKeys = await cleanupVariations(
       new Storage(this.context),
       s3ObjectPath,
@@ -41,6 +41,7 @@ export default class VariationsUtil {
       tenant: this.message.tenant,
       mode: this.message.mode,
       relPath: this.message.relPath,
+      initiator: this.message.initiator,
       variation,
     }));
   }
