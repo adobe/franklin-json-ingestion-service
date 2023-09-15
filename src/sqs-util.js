@@ -19,6 +19,8 @@ import {
 import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
 import VariationsUtil from './variations-util.js';
+import { getParameter } from './ssm-util.js';
+import { SETTINGS_KEY } from './constants.js';
 
 const conversationIdCache = {};
 
@@ -49,7 +51,7 @@ export async function processMessage(context, message) {
     // init globalContext for given tenant
     if (!context.cachedSettings[tenant]) {
       try {
-        context.cachedSettings[tenant] = await storage.getKey(`${tenant}/settings.json`);
+        context.cachedSettings[tenant] = JSON.parse(await getParameter(tenant, SETTINGS_KEY));
       } catch (e) {
         context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
       }

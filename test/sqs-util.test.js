@@ -14,25 +14,26 @@
 import assert from 'assert';
 import {
   S3Client,
-  ListObjectsV2Command, DeleteObjectsCommand, GetObjectCommand, PutObjectCommand,
+  ListObjectsV2Command, DeleteObjectsCommand, PutObjectCommand,
 } from '@aws-sdk/client-s3';
+import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import nock from 'nock';
 import { processMessage } from '../src/sqs-util.js';
 
 const s3Mock = mockClient(S3Client);
-
+const ssmMock = mockClient(SSMClient);
 describe('SQS Util Tests', () => {
   beforeEach(() => {
     nock.cleanAll();
     nock.restore();
     nock.activate();
-    s3Mock.reset();
-    s3Mock.on(GetObjectCommand)
+    ssmMock.reset();
+    ssmMock.on(GetParameterCommand)
       .resolvesOnce(
         {
-          Body: {
-            transformToString: () => JSON.stringify({
+          Parameter: {
+            Value: JSON.stringify({
               preview: {
                 baseURL: 'http://author-localhost',
               },
@@ -43,6 +44,7 @@ describe('SQS Util Tests', () => {
           },
         },
       );
+    s3Mock.reset();
   });
   it('process sqs records store skipped on 404', async () => {
     nock('http://author-localhost')
@@ -59,7 +61,7 @@ describe('SQS Util Tests', () => {
       mode: 'preview',
       action: 'store',
     });
-    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
+    assert.strictEqual(ssmMock.commandCalls(GetParameterCommand).length, 1);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 0);
   });
   it('process sqs records store success', async () => {
@@ -82,7 +84,7 @@ describe('SQS Util Tests', () => {
       action: 'store',
       initiator: 'a@b',
     });
-    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
+    assert.strictEqual(ssmMock.commandCalls(GetParameterCommand).length, 1);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
   });
   it('process sqs records store with variations success', async () => {
@@ -114,7 +116,7 @@ describe('SQS Util Tests', () => {
       mode: 'preview',
       action: 'store',
     });
-    assert.strictEqual(s3Mock.commandCalls(GetObjectCommand).length, 1);
+    assert.strictEqual(ssmMock.commandCalls(GetParameterCommand).length, 1);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 2);
   });
   it('process sqs records evict success', async () => {
