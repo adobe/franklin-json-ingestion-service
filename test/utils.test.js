@@ -24,8 +24,7 @@ import {
   collectVariations,
   sendSlackMessage,
   processSequence,
-  cloneObject,
-  extractS3ObjectPath, isValidEmail, createConversation, isValidRelPath, buildParallelQueues,
+  cloneObject, extractS3ObjectPath, isValidEmail, createConversation, isValidRelPath,
 } from '../src/utils.js';
 
 describe('Utils Tests', () => {
@@ -302,38 +301,5 @@ describe('Utils Tests', () => {
     assert.strictEqual(isValidRelPath(1), false);
     assert.strictEqual(isValidRelPath(true), false);
     assert.strictEqual(isValidRelPath({}), false);
-  });
-  it('buildParallelQueues cases', () => {
-    assert.deepStrictEqual(
-      buildParallelQueues(
-        { relPath: 'a/b/c' },
-      ),
-      [
-        [{ relPath: 'a/b/c' }],
-      ],
-    );
-    assert.deepStrictEqual(
-      buildParallelQueues(
-        {
-          relPath: [
-            'a/b/c0', 'a/b/c1', 'a/b/c2', 'a/b/c3', 'a/b/c4',
-            'a/b/c5', 'a/b/c6', 'a/b/c7', 'a/b/c8', 'a/b/c9',
-            'a/b/c10', 'a/b/c11', 'a/b/c12', 'a/b/c13', 'a/b/c14', 'a/b/c15',
-          ],
-        },
-      ),
-      [
-        [{ relPath: 'a/b/c0' }, { relPath: 'a/b/c10' }],
-        [{ relPath: 'a/b/c1' }, { relPath: 'a/b/c11' }],
-        [{ relPath: 'a/b/c2' }, { relPath: 'a/b/c12' }],
-        [{ relPath: 'a/b/c3' }, { relPath: 'a/b/c13' }],
-        [{ relPath: 'a/b/c4' }, { relPath: 'a/b/c14' }],
-        [{ relPath: 'a/b/c5' }, { relPath: 'a/b/c15' }],
-        [{ relPath: 'a/b/c6' }],
-        [{ relPath: 'a/b/c7' }],
-        [{ relPath: 'a/b/c8' }],
-        [{ relPath: 'a/b/c9' }],
-      ],
-    );
   });
 });

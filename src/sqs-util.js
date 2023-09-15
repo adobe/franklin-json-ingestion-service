@@ -14,8 +14,7 @@ import * as crypto from 'crypto';
 import processQueue from '@adobe/helix-shared-process-queue';
 import Storage from './storage.js';
 import {
-  buildParallelQueues, cloneObject,
-  createConversation, extractS3ObjectPath, isValidEmail, processSequence, sendSlackMessage,
+  cloneObject, createConversation, extractS3ObjectPath, isValidEmail, sendSlackMessage,
 } from './utils.js';
 import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
@@ -108,12 +107,4 @@ export async function processMessage(context, message) {
       evictedKeys,
     );
   }
-}
-export async function processParallelMessages(context, message) {
-  const queues = buildParallelQueues(message);
-  await processQueue(queues, async (subqueue) => {
-    await processSequence(subqueue, async (msg) => {
-      await processMessage(context, msg);
-    });
-  });
 }
