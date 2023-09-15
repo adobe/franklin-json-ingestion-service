@@ -37,6 +37,7 @@ describe('Variations Utils Tests', () => {
         tenant: 'localhost',
         mode: 'preview',
         relPath: 'a/b/c',
+        initiator: 'test@abc.com',
       },
     );
     const variationMessages = await varUtil.process({
@@ -49,6 +50,7 @@ describe('Variations Utils Tests', () => {
         tenant: 'localhost',
         mode: 'preview',
         relPath: 'a/b/c',
+        initiator: 'test@abc.com',
         variation: 'var1',
       },
       {
@@ -56,6 +58,7 @@ describe('Variations Utils Tests', () => {
         tenant: 'localhost',
         mode: 'preview',
         relPath: 'a/b/c',
+        initiator: 'test@abc.com',
         variation: 'var2',
       },
     ]);
