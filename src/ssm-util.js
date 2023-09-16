@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 import { SSMClient, PutParameterCommand, GetParameterCommand } from '@aws-sdk/client-ssm';
+import { SSM_PARAMETER_PREFIX } from './constants.js';
 
 const ssmClient = new SSMClient({
   region: process.env.AWS_REGION,
@@ -17,7 +18,7 @@ const ssmClient = new SSMClient({
 });
 
 export async function putParameter(tenant, key, value) {
-  const parameterName = `/${tenant}/${key}`;
+  const parameterName = `${SSM_PARAMETER_PREFIX}/${tenant}/${key}`;
 
   const params = {
     Name: parameterName,
@@ -32,7 +33,7 @@ export async function putParameter(tenant, key, value) {
 }
 
 export async function getParameter(tenant, key) {
-  const parameterName = `/${tenant}/${key}`;
+  const parameterName = `${SSM_PARAMETER_PREFIX}/${tenant}/${key}`;
 
   const params = {
     Name: parameterName,
