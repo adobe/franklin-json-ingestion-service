@@ -1,3 +1,53 @@
+# [2.0.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.6.1...v2.0.0) (2023-09-18)
+
+
+* SITES-15403 [Franklin Headless] Implement polling instead of pushing using sqs queue (#55) ([c7e37d8](https://github.com/adobe/franklin-json-ingestion-service/commit/c7e37d8e3f3f0fd6fac8b8c9598ba7df3c40f23e)), closes [#55](https://github.com/adobe/franklin-json-ingestion-service/issues/55)
+
+
+### BREAKING CHANGES
+
+* use of sqs, polling content from author/publish, send slack notifications
+
+* fix: possible issues is resource is not present
+
+especially on publisher due to content backflow usage)
+* use of sqs, polling content from author/publish, send slack notifications
+
+* fix: increase memory and timeout
+* use of sqs, polling content from author/publish, send slack notifications
+
+* fix: message group id
+
+* fix: parameter order
+
+* fix: adding more time for post deploy test
+
+* fix: adding increase number of retries
+
+* fix: making it backward compatible with franklin-ingestor 0.0.52
+
+* feat: allow to silence notifications for batch processing
+
+* feat: use initiator information to send slack notifications
+
+* fix: missing await
+
+* feat: allow store in parallel for batch script
+
+* fix: use param.path in message
+
+* feat: support multiple relPath parallel processing per lambda function call
+
+* Revert "feat: support multiple relPath parallel processing per lambda function call"
+
+This reverts commit b0774539088406896013467069386d994fc7e9f9.
+
+* fix: missing to copy initiator for variations slack notification
+
+* fix: test to pass initiator
+
+* fix: remove unused
+
 ## [1.6.1](https://github.com/adobe/franklin-json-ingestion-service/compare/v1.6.0...v1.6.1) (2023-06-19)
 
 
