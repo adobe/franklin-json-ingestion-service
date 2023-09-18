@@ -45,15 +45,15 @@ export default class InvalidateClient {
     return success;
   }
 
-  async invalidateAll(s3Keys, selection) {
+  async invalidateAll(s3Keys) {
     const thisClient = this;
     return processQueue(cloneObject(s3Keys), async (s3Key) => {
       let result;
       if (s3Key) {
         const key = s3Key.Key;
         if (key) {
-          const rootKey = extractRootKey(key, selection);
-          const variation = extractVariation(key, selection);
+          const rootKey = extractRootKey(key);
+          const variation = extractVariation(key);
           const value = await thisClient.invalidate(rootKey, variation);
           result = { key: rootKey, value, variation };
         }

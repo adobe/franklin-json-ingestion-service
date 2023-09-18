@@ -1,57 +1,48 @@
-# Store payload in preview
-POST https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/ci253 HTTP/1.1
+# Setup Settings
+POST {{endpoint}} HTTP/1.1
 content-type: application/json;charset=utf-8
 
 {
-    "action": "store",
-    "tenant": "1ddae356422974932f5f02946a3f2670d782ac7eae55edb32e4b9b65f7d",
-    "relPath": "a/b/c",
-    "mode": "preview",
-    "selector": "cfm.gql",
-    "payload": {
-        "data": {
-            "id": "test-data-id",
-            "prop1": "value1",
-            "prop2": 1000
-        }
+  "action": "settings",
+  "tenant": "localhost",
+  "payload": {
+    "slackChannelId": "{{slackChannelId}}",
+    "slackToken": "{{slackToken}}",
+    "preview": {
+      "baseURL": "{{authorUrl}}",
+      "authorization": "Basic {{authorBasic}}",
+      "external": "{{authorExternalUrl}}"
+    },
+    "live": {
+      "baseURL": "{{publishUrl}}",
+      "external": "{{publishExternalUrl}}"
     }
+  }
 }
 
 ###
 
+# Store in preview
+POST {{endpoint}} HTTP/1.1
+content-type: application/json;charset=utf-8
+
+{
+  "action": "store",
+  "tenant": "localhost",
+  "relPath": "a/b/c",
+  "mode": "preview"
+}
+
+###
+
+###
 # Evict object in preview
-POST http://localhost:3000/ HTTP/1.1
+POST {{endpoint}} HTTP/1.1
 content-type: application/json
 
 {
-    "action": "evict",
-    "tenant": "local",
-    "relPath": "a/b/c",
-    "mode": "preview"
-}
-
-###
-
-# Copy existing preview to live
-POST http://localhost:3000/ HTTP/1.1
-content-type: application/json
-
-{
-    "action": "store",
-    "tenant": "local",
-    "relPath": "a/b/c",
-    "mode": "live"
-}
-
-###
-
-# Evict existing live object
-POST http://localhost:3000/ HTTP/1.1
-content-type: application/json
-
-{
-    "action": "evict",
-    "tenant": "wknd",
-    "relPath": "en/adventures/all-adventures",
-    "mode": "preview"
+  "action": "evict",
+  "tenant": "local",
+  "relPath": "a/b/c",
+  "mode": "preview"
 }

@@ -12,14 +12,30 @@
 
 /* eslint-env mocha */
 import {
-  S3Client, PutObjectCommand, CopyObjectCommand,
+  S3Client, PutObjectCommand,
   ListObjectsV2Command, GetObjectCommand, DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
 import Storage from '../src/storage.js';
 
+const initialEnv = { ...process.env };
 describe('Storage Tests', () => {
+  after(() => {
+    process.env = initialEnv;
+  });
+  it('doesnt uses forcePathStyle for non local setup', async () => {
+    process.env.AWS_ENDPOINT_URL = 'http://aws-host:9000';
+    mockClient(S3Client);
+    const result = new Storage();
+    assert.strictEqual(result.s3.config.forcePathStyle, false);
+  });
+  it('uses forcePathStyle for localhost setup', async () => {
+    process.env.AWS_ENDPOINT_URL = 'http://localhost:9000';
+    mockClient(S3Client);
+    const result = new Storage();
+    assert.strictEqual(result.s3.config.forcePathStyle, true);
+  });
   it('putKey call PutObjectCommand one time', async () => {
     const s3Mock = mockClient(S3Client);
     const key = 'local/preview/a/b/c.json';
@@ -28,6 +44,33 @@ describe('Storage Tests', () => {
     };
     const result = await new Storage().putKey(key, payload);
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
+    const calls = s3Mock.commandCalls(PutObjectCommand);
+    assert.deepStrictEqual(calls[0].firstArg.input, {
+      Bucket: 'franklin-content-bus-headless',
+      Key: 'local/preview/a/b/c.json',
+      Body: '{"test":"value"}',
+      ContentType: 'application/json;charset=utf-8',
+    });
+    assert.strictEqual(result, key);
+  });
+  it('putKey with variation add metadata', async () => {
+    const s3Mock = mockClient(S3Client);
+    const key = 'local/preview/a/b/c.json/variations/var1';
+    const payload = {
+      test: 'value',
+    };
+    const result = await new Storage().putKey(key, payload, 'var1');
+    assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
+    const calls = s3Mock.commandCalls(PutObjectCommand);
+    assert.deepStrictEqual(calls[0].firstArg.input, {
+      Bucket: 'franklin-content-bus-headless',
+      Key: 'local/preview/a/b/c.json/variations/var1',
+      Body: '{"test":"value"}',
+      ContentType: 'application/json;charset=utf-8',
+      Metadata: {
+        variation: 'var1',
+      },
+    });
     assert.strictEqual(result, key);
   });
   it('putKey fails on invalid payload value', async () => {
@@ -49,26 +92,6 @@ describe('Storage Tests', () => {
       async () => new Storage().putKey(key, payload),
       {
         message: 'An error occurred while trying to store local/preview/a/b/c.json in S3 bucket due to Invalid Operation',
-      },
-    );
-  });
-  it('copyKey call CopyObjectCommand one time', async () => {
-    const s3Mock = mockClient(S3Client);
-    const sourceKey = 'local/preview/a/b/c.json';
-    const targetKey = 'local/live/a/b/c.json';
-    const result = await new Storage().copyKey(sourceKey, targetKey);
-    assert.strictEqual(s3Mock.commandCalls(CopyObjectCommand).length, 1);
-    assert.strictEqual(result, targetKey);
-  });
-  it('copyKey fails on internal operation error', async () => {
-    const s3Mock = mockClient(S3Client);
-    s3Mock.on(CopyObjectCommand).rejects('Invalid Operation');
-    const sourceKey = 'local/preview/a/b/c.json';
-    const targetKey = 'local/live/a/b/c.json';
-    await assert.rejects(
-      async () => new Storage().copyKey(sourceKey, targetKey),
-      {
-        message: `An error occurred while trying to copy ${sourceKey} to ${targetKey} in S3 bucket due to Invalid Operation`,
       },
     );
   });
@@ -114,6 +137,21 @@ describe('Storage Tests', () => {
     const result = await new Storage().listKeys(keyPrefix);
     assert.strictEqual(s3Mock.commandCalls(ListObjectsV2Command).length, 2);
     assert.strictEqual(result.length, 6);
+  });
+  it('getKey success', async () => {
+    const s3Mock = mockClient(S3Client);
+    const data = { test: 'data' };
+    const source = JSON.stringify(data);
+    const key = 'local/preview/a/b/c.json';
+    s3Mock
+      .on(GetObjectCommand, {
+        Key: key,
+      })
+      .resolves({
+        Body: { transformToString: () => source },
+      });
+    const resultingJson = await new Storage().getKey(key);
+    assert.deepStrictEqual(resultingJson, data);
   });
   it('getKey fails if not found', async () => {
     const s3Mock = mockClient(S3Client);

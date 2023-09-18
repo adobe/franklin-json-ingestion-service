@@ -85,7 +85,6 @@ describe('Invalidate Tests', () => {
         { Key: 'some/key/test.cfm.gql.json' },
         { Key: 'some/key/test.cfm.gql.json/variations/var1' },
       ],
-      '.cfm.gql',
     );
     assert.deepEqual(
       result,

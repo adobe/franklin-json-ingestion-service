@@ -9,6 +9,13 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
+import SlackClient from './slack-client.js';
+
+const SUFFIX = '.cfm.gql.json';
+/* c8 ignore next */
+const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';
+
 export function cloneObject(object) {
   return JSON.parse(JSON.stringify(object));
 }
@@ -91,31 +98,112 @@ export function filterVariationsKeys(keys, keptVariations) {
   }
 }
 
-export async function cleanupVariations(storage, prefix, suffix, variations) {
-  const allVariationsKeys = await storage.listKeys(`${prefix}${suffix}/variations/`);
+export async function cleanupVariations(storage, prefix, variations) {
+  const allVariationsKeys = await storage.listKeys(`${prefix}${SUFFIX}/variations/`);
   const toEvictKeys = filterVariationsKeys(allVariationsKeys, variations);
   return storage.deleteKeys(toEvictKeys);
 }
 
-export function extractRootKey(key, selection) {
-  const pattern = `${selection}.json`;
-  const idx = key.indexOf(pattern);
-  return idx >= 0 ? `${key.substring(0, idx + pattern.length)}` : null;
+export function extractRootKey(key) {
+  const idx = key.indexOf(SUFFIX);
+  return idx >= 0 ? `${key.substring(0, idx + SUFFIX.length)}` : null;
 }
 
-export function extractVariation(key, selection) {
-  const pattern = `${selection}.json/variations/`;
+export function extractVariation(key) {
+  const pattern = `${SUFFIX}/variations/`;
   const idx = key.indexOf(pattern);
   return idx >= 0 ? `${key.substring(idx + pattern.length)}` : null;
 }
 
-export function extractVariations(s3Keys, selection) {
+export async function sendSlackMessage(slackToken, channelId, message) {
+  if (slackToken && channelId) {
+    await new SlackClient(SLACK_URL, slackToken)
+      .postMessage(channelId, message);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export function isValidEmail(email) {
+  return /^[^@]+@[^@]+$/.test(email);
+}
+
+export function isValidRelPath(relPath) {
+  let isValid = false;
+  function validatePath(path) {
+    return typeof path === 'string' && path.indexOf('/') !== 0;
+  }
+  if (Array.isArray(relPath)) {
+    for (const path of relPath) {
+      isValid = validatePath(path);
+      if (!isValid) {
+        break;
+      }
+    }
+  } else {
+    isValid = validatePath(relPath);
+  }
+  return isValid;
+}
+
+export async function createConversation(slackToken, email) {
+  if (slackToken && isValidEmail(email)) {
+    const slackClient = new SlackClient(SLACK_URL, slackToken);
+    const userId = await slackClient.findUserId(email);
+    return slackClient.createConversation(userId);
+  }
+  return null;
+}
+
+export function extractVariations(s3Keys) {
   return s3Keys.map((entry) => {
     const key = entry.Key;
-    if (key && selection) {
-      return extractVariation(key, selection);
+    if (key) {
+      return extractVariation(key);
     } else {
       return null;
     }
   }).filter((value) => value != null);
+}
+
+export function validSettings(payload) {
+  return payload && payload.live && payload.preview
+      && payload.live.baseURL.match(/https?:\/\/[^/]+/)
+      && payload.preview.baseURL.match(/https?:\/\/[^/]+/);
+}
+
+export function collectVariations(data) {
+  const variations = new Set();
+  Object.keys(data).forEach((key) => {
+    if (key === '_variations') {
+      data[key].forEach((variation) => {
+        variations.add(variation);
+      });
+    } else {
+      const value = data[key];
+      if (value) {
+        if (typeof value === 'object') {
+          collectVariations(value).forEach((variation) => {
+            variations.add(variation);
+          });
+        }
+      }
+    }
+  });
+  return variations;
+}
+
+export async function processSequence(records, fn) {
+  const record = records.shift();
+  if (record) {
+    await fn(record);
+    await processSequence(records, fn);
+  }
+}
+export function extractS3ObjectPath(obj) {
+  const { tenant, mode, relPath } = obj;
+  const s3PreviewObjectPath = `${tenant}/preview/${relPath}`;
+  const s3LiveObjectPath = `${tenant}/live/${relPath}`;
+  return mode === 'live' ? s3LiveObjectPath : s3PreviewObjectPath;
 }

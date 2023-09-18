@@ -12,9 +12,10 @@
 import { promisify } from 'util';
 import zlib from 'zlib';
 import { APPLICATION_JSON } from './constants.js';
+import { isValidRelPath } from './utils.js';
 
 const VALID_MODES = ['preview', 'live'];
-const VALID_ACTIONS = ['store', 'evict', 'touch', 'cleanup'];
+const VALID_ACTIONS = ['store', 'evict', 'settings', 'cleanup'];
 const VALID_METHODS = ['POST'];
 
 const gunzip = promisify(zlib.gunzip);
@@ -25,6 +26,18 @@ export default class RequestUtil {
     this.isValid = false;
     this.errorMessage = '';
     this.errorStatusCode = 400;
+  }
+
+  toMessage(relPath) {
+    const message = {
+      action: this.action,
+      mode: this.mode,
+      tenant: this.tenant,
+      relPath,
+      variation: this.variation,
+      initiator: this.initiator,
+    };
+    return message;
   }
 
   async validate() {
@@ -52,6 +65,12 @@ export default class RequestUtil {
       return;
     }
 
+    this.action = this.json.action || 'store';
+    if (!VALID_ACTIONS.includes(this.action)) {
+      this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
+      return;
+    }
+
     this.tenant = this.json.tenant;
     if (!this.tenant || !this.tenant.match(/^[a-zA-Z0-9\-_]*$/g)) {
       this.errorMessage = 'Invalid parameters tenantId value, accept: [a..zA-Z0-9\\-_]';
@@ -59,32 +78,21 @@ export default class RequestUtil {
     }
 
     this.relPath = this.json.relPath;
-    if (!this.relPath || typeof this.relPath !== 'string' || this.relPath.indexOf('/') === 0) {
+    const checkRelPath = ['store', 'evict'].includes(this.action);
+    const relPathInvalid = !isValidRelPath(this.relPath);
+    if (checkRelPath && relPathInvalid) {
       this.errorMessage = 'Invalid parameters relPath value, should not start with /';
       return;
     }
-    this.selector = this.json.selector;
     this.mode = this.json.mode || 'preview';
 
     if (!VALID_MODES.includes(this.mode)) {
       this.errorMessage = `Invalid parameters mode value, accept:${VALID_MODES}`;
       return;
     }
-
-    this.action = this.json.action || 'store';
-    if (!VALID_ACTIONS.includes(this.action)) {
-      this.errorMessage = `Invalid parameters action value, accept:${VALID_ACTIONS}`;
-      return;
-    }
-    if (this.action === 'cleanup') {
-      this.keptVariations = this.json.keptVariations;
-      if (!this.keptVariations) {
-        this.errorMessage = 'Invalid parameter missing keptVariations parameter for cleanup';
-        return;
-      }
-    }
     this.variation = this.json.variation;
     this.payload = this.json.payload;
+    this.initiator = this.json.initiator;
     this.isValid = true;
   }
 }
