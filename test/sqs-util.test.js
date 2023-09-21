@@ -19,6 +19,7 @@ import {
 import { mockClient } from 'aws-sdk-client-mock';
 import nock from 'nock';
 import { processMessage } from '../src/sqs-util.js';
+import { DEFAULT_BUCKET } from '../src/constants.js';
 
 const s3Mock = mockClient(S3Client);
 
@@ -141,7 +142,7 @@ describe('SQS Util Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(DeleteObjectsCommand).length, 1);
     const calls = s3Mock.commandCalls(DeleteObjectsCommand);
     assert.deepStrictEqual(calls[0].firstArg.input, {
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Delete: {
         Objects: [
           {

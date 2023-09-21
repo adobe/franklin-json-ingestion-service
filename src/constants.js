@@ -9,5 +9,5 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-export const DEFAULT_BUCKET = 'franklin-content-bus-headless';
+export const DEFAULT_BUCKET = 'franklin-content-bus-headless-json';
 export const APPLICATION_JSON = 'application/json';
