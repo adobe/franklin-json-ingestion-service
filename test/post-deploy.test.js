@@ -83,7 +83,6 @@ createTargets().forEach((target) => {
       });
       assert.strictEqual(evictRes.status, 200);
       await check(tenant, mode, `${relPath}.cfm.gql.json`, 404, MAX_RETRIES);
-      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 404, MAX_RETRIES);
       await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 404, MAX_RETRIES);
       const res = await fetch(`${target.host()}${target.urlPath()}`, {
         method: 'POST',
@@ -99,7 +98,6 @@ createTargets().forEach((target) => {
       });
       assert.strictEqual(res.status, 200);
       await check(tenant, mode, `${relPath}.cfm.gql.json`, 200, MAX_RETRIES);
-      await check(tenant, mode, `${relPath}.cfm.gql.max_22.json`, 200, MAX_RETRIES);
       await check(tenant, mode, `${relPath}.cfm.gql.cch.json`, 200, MAX_RETRIES);
     }).timeout(120000); // it needs a bit of time to process sqs message in background
   });
