@@ -86,11 +86,11 @@ workflows:
             - build
           filters:
             branches:
-              ignore: main
+              ignore: v1
       - semantic-release:
           context: Project Helix Tier3
           requires:
             - build
           filters:
             branches:
-              only: main
+              only: v1
