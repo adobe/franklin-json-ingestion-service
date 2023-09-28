@@ -44,7 +44,6 @@ jobs:
       - run:
           name: revert changes to package-lock.json
           command: git checkout -- package-lock.json
-      - helix-post-deploy/config-env
       - run:
           name: V1 Release Deployment
           command: npm run deploy
