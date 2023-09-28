@@ -37,7 +37,7 @@ jobs:
       - store_artifacts:
           path: junit
 
-  semantic-release:
+  v1-release:
     executor: node18
     steps:
       - setup
@@ -46,18 +46,13 @@ jobs:
           command: git checkout -- package-lock.json
       - helix-post-deploy/config-env
       - run:
-          name: Semantic Release
-          command: npm run semantic-release
+          name: V1 Release Deployment
+          command: npm run deploy
+      - run:
+          name: Post-Deployment Integration Test
+          command: npm run test-postdeploy
       - store_test_results:
           path: junit
-      # see https://circleci.com/orbs/registry/orb/adobe/helix-post-deploy
-      # for more available parameters
-      #- helix-post-deploy/monitoring:
-      #    statuspage_name: Franklin JSON Ingestion Service
-      #    statuspage_group: Development
-      #    newrelic_group_policy: Development Repeated Failure
-      #    targets: aws
-      #    incubator: true # remove only when promoting service to production
 
   branch-deploy:
     executor: node18
@@ -87,7 +82,7 @@ workflows:
           filters:
             branches:
               ignore: v1
-      - semantic-release:
+      - v1-release:
           context: Project Helix Tier3
           requires:
             - build
