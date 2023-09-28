@@ -13,9 +13,9 @@
     "lintfix": "eslint --fix .",
     "semantic-release": "semantic-release",
     "build": "hedy -v",
-    "deploy": "hedy -v --deploy --test",
+    "deploy": "hedy -v --deploy --test -p EDGE_AUTH_TOKEN_1=$EDGE_AUTH_TOKEN",
     "deploy-routes": "hedy --no-build --no-hints -l major",
-    "deploy-ci": "hedy -v --deploy --test --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci --cleanup-ci 24h",
+    "deploy-ci": "hedy -v --deploy --test --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci --cleanup-ci 24h -p EDGE_AUTH_TOKEN_1=$EDGE_AUTH_TOKEN",
     "prepare": "husky install"
   },
   "wsk": {
