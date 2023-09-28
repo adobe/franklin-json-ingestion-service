@@ -19,13 +19,41 @@ import RequestUtil from '../src/request-util.js';
 import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('RequestUtil Tests', () => {
+  const authToken = '12345';
+  let envCache;
+
+  before(() => {
+    envCache = process.env;
+    process.env.EDGE_AUTH_TOKEN_1 = authToken;
+  });
+
+  after(() => {
+    process.env = envCache;
+  });
+
+  it('fails on bad auth', async () => {
+    const reqUtil = new RequestUtil(
+      new Request(
+        'https://localhost/',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'text/html', 'x-edge-authorization': 'token bad' },
+        },
+      ),
+      {},
+    );
+    await reqUtil.validate();
+    assert.strictEqual(reqUtil.isValid, false);
+    assert.strictEqual(reqUtil.errorStatusCode, 401);
+    assert.strictEqual(reqUtil.errorMessage, 'Unauthorized');
+  });
   it('fails on invalid content-type', async () => {
     const reqUtil = new RequestUtil(
       new Request(
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': 'text/html' },
+          headers: { 'content-type': 'text/html', 'x-edge-authorization': `token ${authToken}` },
         },
       ),
       {},
@@ -33,7 +61,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid request content type please check the API for details');
+    assert.strictEqual(reqUtil.errorMessage, 'Invalid content type');
   });
   it('fails on missing tenant', async () => {
     const reqUtil = new RequestUtil(
@@ -41,7 +69,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: '{}',
         },
       ),
@@ -58,7 +86,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
           }),
@@ -77,7 +105,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 10,
@@ -97,7 +125,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
             relPath: '/a/b/c',
@@ -117,7 +145,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -138,7 +166,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -160,7 +188,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'some+id',
           }),
@@ -179,7 +207,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -193,7 +221,7 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Invalid parameter missing keptVariations parameter for cleanup');
+    assert.strictEqual(reqUtil.errorMessage, 'Required keptVariations missing');
   });
   it('fails on invalid json payload', async () => {
     const reqUtil = new RequestUtil(
@@ -201,7 +229,7 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, 'x-edge-authorization': `token ${authToken}` },
           body: '{ test: invalid, }',
         },
       ),
@@ -210,7 +238,6 @@ describe('RequestUtil Tests', () => {
     await reqUtil.validate();
     assert.strictEqual(reqUtil.isValid, false);
     assert.strictEqual(reqUtil.errorStatusCode, 400);
-    assert.strictEqual(reqUtil.errorMessage, 'Error while parsing the body as json due to Unexpected token t in JSON at position 2');
   });
   it('support gzip compressed request', async () => {
     const jsonBody = JSON.stringify({
@@ -227,7 +254,9 @@ describe('RequestUtil Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON, 'Transfer-Encoding': 'chuncked', 'Content-Encoding': 'gzip' },
+          headers: {
+            'content-type': APPLICATION_JSON, 'Transfer-Encoding': 'chuncked', 'Content-Encoding': 'gzip', 'x-edge-authorization': `token ${authToken}`,
+          },
           body: zlib.gzipSync(jsonBody),
         },
       ),

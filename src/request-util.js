@@ -27,15 +27,40 @@ export default class RequestUtil {
     this.errorStatusCode = 400;
   }
 
+  isAuthorized() {
+    const auth = this.request.headers.get('x-edge-authorization') ?? this.request.headers.authorization;
+    if (!auth || !auth.startsWith('token ')) {
+      // no auth header
+      return false;
+    }
+    // check if the token matches any of the tokens
+    const token = auth.substring(6).trim();
+    for (let i = 0; i < 4; i += 1) {
+      const tokenKey = `EDGE_AUTH_TOKEN_${i}`;
+      const configuredTokenValue = process.env[tokenKey];
+      if (configuredTokenValue && token === configuredTokenValue) {
+        return true;
+      }
+    }
+    // no token matches
+    return false;
+  }
+
   async validate() {
+    if (!this.isAuthorized()) {
+      this.errorMessage = 'Unauthorized';
+      this.errorStatusCode = 401;
+      return;
+    }
+
     if (!VALID_METHODS.includes(this.request.method)) {
-      this.errorMessage = 'Currently only POST | GET is implemented';
+      this.errorMessage = 'Method not allowed';
       this.errorStatusCode = 405;
       return;
     }
 
     if (!this.request.headers.get('Content-Type').startsWith(APPLICATION_JSON)) {
-      this.errorMessage = 'Invalid request content type please check the API for details';
+      this.errorMessage = 'Invalid content type';
       return;
     }
 
@@ -79,7 +104,7 @@ export default class RequestUtil {
     if (this.action === 'cleanup') {
       this.keptVariations = this.json.keptVariations;
       if (!this.keptVariations) {
-        this.errorMessage = 'Invalid parameter missing keptVariations parameter for cleanup';
+        this.errorMessage = 'Required keptVariations missing';
         return;
       }
     }

@@ -20,12 +20,36 @@ import { main } from '../src/index.js';
 import { APPLICATION_JSON } from '../src/constants.js';
 
 describe('Index Tests', () => {
+  const authToken = '12345';
+  const headers = { 'x-edge-authorization': `token ${authToken}` };
+  const wrongHeaders = { 'x-edge-authorization': 'token bad' };
+  let envCache;
+
+  before(() => {
+    envCache = process.env;
+    process.env.EDGE_AUTH_TOKEN_1 = authToken;
+  });
+
+  after(() => {
+    process.env = envCache;
+  });
+
+  it('do not allow wrong token', async () => {
+    const result = await main(new Request('https://localhost/', { headers: wrongHeaders }), {});
+    assert.strictEqual(await result.status, 401);
+  });
+
+  it('do not allow unauthorized', async () => {
+    const result = await main(new Request('https://localhost/', {}), {});
+    assert.strictEqual(await result.status, 401);
+  });
+
   it('index function is present', async () => {
-    const result = await main(new Request('https://localhost/'), {});
+    const result = await main(new Request('https://localhost/', { headers }), {});
     assert.strictEqual(await result.status, 405);
   });
   it('only POST allowed', async () => {
-    const result = await main(new Request('https://localhost/', { method: 'PUT' }), {});
+    const result = await main(new Request('https://localhost/', { method: 'PUT', headers }), {});
     assert.strictEqual(await result.status, 405);
   });
   it('stores in preview as implicit operation', async () => {
@@ -35,7 +59,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -57,7 +81,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -80,7 +104,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -103,7 +127,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             tenant: 'local',
             relPath: 'a/b/c',
@@ -127,7 +151,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -148,7 +172,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             action: 'store',
             mode: 'live',
@@ -170,7 +194,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             action: 'touch',
             mode: 'live',
@@ -192,7 +216,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             action: 'touch',
             mode: 'preview',
@@ -237,7 +261,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -283,7 +307,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',
@@ -318,7 +342,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             mode: 'live',
             action: 'evict',
@@ -368,7 +392,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             mode: 'preview',
             action: 'evict',
@@ -398,7 +422,7 @@ describe('Index Tests', () => {
         'https://localhost/',
         {
           method: 'POST',
-          headers: { 'content-type': APPLICATION_JSON },
+          headers: { 'content-type': APPLICATION_JSON, ...headers },
           body: JSON.stringify({
             mode,
             action: 'cleanup',
