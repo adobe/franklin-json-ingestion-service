@@ -1,3 +1,12 @@
+## [2.0.2](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.0.1...v2.0.2) (2023-09-29)
+
+
+### Bug Fixes
+
+* lint ([fae9c24](https://github.com/adobe/franklin-json-ingestion-service/commit/fae9c242fc8aa53fc5136398be04daaedff4f407))
+* test for post-deploy ([1234278](https://github.com/adobe/franklin-json-ingestion-service/commit/12342788c7924261d5a42a50be0b77dcd3447805))
+* use new AWS account to deploy our lambda ([#57](https://github.com/adobe/franklin-json-ingestion-service/issues/57)) ([a15a0af](https://github.com/adobe/franklin-json-ingestion-service/commit/a15a0af7e5a1e43b0106cb303388f7995558fca9))
+
 ## [2.0.1](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.0.0...v2.0.1) (2023-09-18)
 
 
