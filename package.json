@@ -30,8 +30,8 @@
     ],
     "testUrl": "/_status_check/healthcheck.json",
     "memory": 256,
-    "awsRole!important": "arn:aws:iam::282898975672:role/franklin-role-lambda-headless",
-    "awsDeployTemplate": "helix-tier3-deploy-template",
+    "awsRole!important": "arn:aws:iam::480147251892:role/franklin-role-lambda-headless",
+    "_awsDeployTemplate": "helix-tier3-deploy-template",
     "fastlyServiceId!important": ""
   },
   "mocha": {

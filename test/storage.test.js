@@ -18,6 +18,7 @@ import {
 import { mockClient } from 'aws-sdk-client-mock';
 import assert from 'assert';
 import Storage from '../src/storage.js';
+import { DEFAULT_BUCKET } from '../src/constants.js';
 
 const initialEnv = { ...process.env };
 describe('Storage Tests', () => {
@@ -46,7 +47,7 @@ describe('Storage Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
     const calls = s3Mock.commandCalls(PutObjectCommand);
     assert.deepStrictEqual(calls[0].firstArg.input, {
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Key: 'local/preview/a/b/c.json',
       Body: '{"test":"value"}',
       ContentType: 'application/json;charset=utf-8',
@@ -63,7 +64,7 @@ describe('Storage Tests', () => {
     assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
     const calls = s3Mock.commandCalls(PutObjectCommand);
     assert.deepStrictEqual(calls[0].firstArg.input, {
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Key: 'local/preview/a/b/c.json/variations/var1',
       Body: '{"test":"value"}',
       ContentType: 'application/json;charset=utf-8',
@@ -98,7 +99,7 @@ describe('Storage Tests', () => {
   it('listKeys call ListObjectsV2Command 1 time with empty Contents', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command, {
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Prefix: 'local/preview/a/b/c.',
     }).resolves({
       IsTruncated: false,
@@ -111,7 +112,7 @@ describe('Storage Tests', () => {
   it('listKeys call ListObjectsV2Command 2 times', async () => {
     const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command, {
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Prefix: 'local/preview/a/b/c.',
     }).resolves({
       IsTruncated: true,
@@ -123,7 +124,7 @@ describe('Storage Tests', () => {
       ],
     }).on(ListObjectsV2Command, {
       ContinuationToken: 'cont-token',
-      Bucket: 'franklin-content-bus-headless',
+      Bucket: DEFAULT_BUCKET,
       Prefix: 'local/preview/a/b/c.',
     }).resolves({
       IsTruncated: false,

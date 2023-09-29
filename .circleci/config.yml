@@ -81,14 +81,14 @@ workflows:
     jobs:
       - build
       - branch-deploy:
-          context: Project Helix Tier3
+          context: Franklin Headless
           requires:
             - build
           filters:
             branches:
               ignore: main
       - semantic-release:
-          context: Project Helix Tier3
+          context: Franklin Headless
           requires:
             - build
           filters:
