@@ -19,6 +19,8 @@ import { createTargets } from './post-deploy-utils.js';
 const fetchContext = noCache();
 const { fetch } = fetchContext;
 
+const defaultHeaders = process.env.HLX_TEST_HEADERS ? JSON.parse(process.env.HLX_TEST_HEADERS) : {};
+
 const sleep = util.promisify(setTimeout);
 const MAX_RETRIES = 120;
 
@@ -45,7 +47,7 @@ createTargets().forEach((target) => {
     });
 
     it('returns the status of the function', async () => {
-      const res = await fetch(`${target.host()}${target.urlPath()}/_status_check/healthcheck.json`);
+      const res = await fetch(`${target.host()}${target.urlPath()}/_status_check/healthcheck.json`, { headers: defaultHeaders });
       assert.strictEqual(res.status, 200);
       const json = await res.json();
       delete json.process;
@@ -61,8 +63,13 @@ createTargets().forEach((target) => {
     }).timeout(50000);
 
     it('invokes the function', async () => {
-      const res = await fetch(`${target.host()}${target.urlPath()}`);
+      const res = await fetch(`${target.host()}${target.urlPath()}`, { headers: defaultHeaders });
       assert.strictEqual(res.status, 405);
+    }).timeout(50000);
+
+    it('invokes the function unauthorized', async () => {
+      const res = await fetch(`${target.host()}${target.urlPath()}`);
+      assert.strictEqual(res.status, 401);
     }).timeout(50000);
 
     it('re-store sample in preview', async () => {
@@ -73,6 +80,7 @@ createTargets().forEach((target) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ... defaultHeaders,
         },
         body: JSON.stringify({
           tenant,
@@ -88,6 +96,7 @@ createTargets().forEach((target) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ... defaultHeaders,
         },
         body: JSON.stringify({
           tenant,
