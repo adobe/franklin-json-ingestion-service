@@ -72,7 +72,7 @@ All commits to main that pass the testing will be deployed automatically. All co
 
 ## Static ip
 
-This service is deployed on AWS Lambda and uses a static ip. The ip is `54.160.86.113` and is used to whitelist the service in the firewall.
+This service is deployed on AWS Lambda and uses a static ip. The ip are `44.194.116.117` and `35.170.184.131`  and is used to whitelist the service in the firewall.
 
 ## Note on commit conventions
 It uses [semantic-release/commit-analyzer](https://github.com/semantic-release/commit-analyzer) to decide to release or not on main branch. If commit message starts with "chore" it will not detect other messages (i.e fix, feat etc..). So make sure to remove chore in the merge messages.
