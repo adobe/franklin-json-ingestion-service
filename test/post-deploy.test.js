@@ -80,7 +80,7 @@ createTargets().forEach((target) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ... defaultHeaders,
+          ...defaultHeaders,
         },
         body: JSON.stringify({
           tenant,
@@ -96,7 +96,7 @@ createTargets().forEach((target) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ... defaultHeaders,
+          ...defaultHeaders,
         },
         body: JSON.stringify({
           tenant,
