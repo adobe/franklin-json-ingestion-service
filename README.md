@@ -23,7 +23,7 @@ See also:
 # to be fixed...
 # curl https://helix-pages.anywhere.run/franklin-services/franklin-json-ingestion-service@v1
 
-curl https://eynvwoxb7l.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/1.0.0
+curl https://txw6tavv82.execute-api.us-east-1.amazonaws.com/helix-services/json-ingestion-service/1.0.0
 ```
 
 For more, see the [API documentation](docs/API.md).
