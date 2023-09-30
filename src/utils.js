@@ -11,10 +11,7 @@
  */
 
 import SlackClient from './slack-client.js';
-
-const SUFFIX = '.cfm.gql.json';
-/* c8 ignore next */
-const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';
+import { SLACK_URL, SUFFIX } from './constants.js';
 
 export function cloneObject(object) {
   return JSON.parse(JSON.stringify(object));
