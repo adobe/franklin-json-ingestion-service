@@ -219,7 +219,7 @@ describe('Index Tests', () => {
       {},
     );
     assert.strictEqual(ssmMock.commandCalls(PutParameterCommand).length, 1);
-    assert.strictEqual(await result.text(), 'settings stored under /local/settings.json');
+    assert.strictEqual(await result.text(), 'settings stored under /franklin-aem-store/local/settings.json');
     assert.strictEqual(await result.status, 200);
   });
   it('setup settings invalid', async () => {
