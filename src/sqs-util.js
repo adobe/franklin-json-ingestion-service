@@ -86,8 +86,8 @@ export async function processMessage(context, message) {
       const varMessage = variation ? ` for variation ${variation}` : '';
       const url = `${settings[mode].external}/content/dam/${relPath}.cfm.gql.${varSelector}json`;
       if (isValidEmail(initiator)) {
-        const { slackToken, slackChannel } = context.cachedSettings[tenant];
-        let slackChannelId = slackChannel || conversationIdCache[initiator];
+        const slackToken = process.env.SLACK_TOKEN;
+        let slackChannelId = conversationIdCache[initiator];
         if (!slackChannelId) {
           slackChannelId = await createConversation(slackToken, initiator);
           conversationIdCache[initiator] = slackChannelId;

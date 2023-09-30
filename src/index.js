@@ -59,7 +59,11 @@ async function httpHandler(request, context) {
   } else if (action === 'cleanup') {
     return new Response('cleanup is deprecated, ignored for now');
   } else if (payload && validSettings(payload)) {
-    const parameterName = await putParameter(tenant, SETTINGS_KEY, JSON.stringify(payload));
+    const parameterName = await putParameter(
+      tenant,
+      SETTINGS_KEY,
+      JSON.stringify(payload, null, 2),
+    );
     context.cachedSettings[tenant] = payload;
     return new Response(`settings stored under ${parameterName}`);
   } else {
