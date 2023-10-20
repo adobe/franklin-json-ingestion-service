@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.0.5...v2.1.0) (2023-10-20)
+
+
+### Features
+
+* refactoring to store settings.json in ssm as parameter per tenant ([#63](https://github.com/adobe/franklin-json-ingestion-service/issues/63)) ([bc4a7d5](https://github.com/adobe/franklin-json-ingestion-service/commit/bc4a7d552641d3226612c69b6e68aba1c369e16b))
+
 ## [2.0.5](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.0.4...v2.0.5) (2023-10-14)
 
 
