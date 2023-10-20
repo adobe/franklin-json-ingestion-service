@@ -57,9 +57,8 @@
     "@adobe/helix-shared-wrap": "2.0.0",
     "@adobe/helix-status": "10.0.10",
     "@adobe/helix-universal-logger": "3.0.11",
-    "@aws-sdk/client-s3": "3.428.0",
-    "@aws-sdk/client-sqs": "3.428.0",
-    "@aws-sdk/client-ssm": "3.428.0"
+    "@aws-sdk/client-s3": "3.421.0",
+    "@aws-sdk/client-sqs": "3.421.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "2.0.3",
