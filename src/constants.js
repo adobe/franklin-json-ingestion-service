@@ -11,3 +11,7 @@
  */
 export const DEFAULT_BUCKET = 'franklin-content-bus-headless';
 export const APPLICATION_JSON = 'application/json';
+export const SETTINGS_KEY = 'settings.json';
+export const SUFFIX = '.cfm.gql.json';
+/* c8 ignore next */
+export const SLACK_URL = process.env.SLACK_URL || 'https://slack.com';

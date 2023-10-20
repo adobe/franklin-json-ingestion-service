@@ -19,6 +19,8 @@ import {
 import PullingClient from './pulling-client.js';
 import InvalidateClient from './invalidate-client.js';
 import VariationsUtil from './variations-util.js';
+import { getParameter } from './ssm-util.js';
+import { SETTINGS_KEY } from './constants.js';
 
 const conversationIdCache = {};
 
@@ -49,7 +51,7 @@ export async function processMessage(context, message) {
     // init globalContext for given tenant
     if (!context.cachedSettings[tenant]) {
       try {
-        context.cachedSettings[tenant] = await storage.getKey(`${tenant}/settings.json`);
+        context.cachedSettings[tenant] = JSON.parse(await getParameter(tenant, SETTINGS_KEY));
       } catch (e) {
         context.log.error(`Error while fetching settings for tenant ${tenant} due to ${e.message}`);
       }
@@ -84,8 +86,8 @@ export async function processMessage(context, message) {
       const varMessage = variation ? ` for variation ${variation}` : '';
       const url = `${settings[mode].external}/content/dam/${relPath}.cfm.gql.${varSelector}json`;
       if (isValidEmail(initiator)) {
-        const { slackToken, slackChannel } = context.cachedSettings[tenant];
-        let slackChannelId = slackChannel || conversationIdCache[initiator];
+        const slackToken = process.env.SLACK_TOKEN;
+        let slackChannelId = conversationIdCache[initiator];
         if (!slackChannelId) {
           slackChannelId = await createConversation(slackToken, initiator);
           conversationIdCache[initiator] = slackChannelId;

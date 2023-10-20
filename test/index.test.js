@@ -16,13 +16,13 @@ import { Request } from '@adobe/fetch';
 import {
   S3Client,
   ListObjectsV2Command,
-  PutObjectCommand, GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import {
   SQSClient,
 } from '@aws-sdk/client-sqs';
 import { mockClient } from 'aws-sdk-client-mock';
 import nock from 'nock';
+import { GetParameterCommand, PutParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 import { main } from '../src/index.js';
 import { APPLICATION_JSON } from '../src/constants.js';
 
@@ -68,12 +68,12 @@ describe('Index Tests', () => {
           test: 'value',
         }),
       });
-    const s3Mock = mockClient(S3Client);
-    s3Mock.on(GetObjectCommand)
+    const ssmMock = mockClient(SSMClient);
+    ssmMock.on(GetParameterCommand)
       .resolvesOnce(
         {
-          Body: {
-            transformToString: () => JSON.stringify({
+          Parameter: {
+            Value: JSON.stringify({
               preview: {
                 baseURL: 'http://author-localhost',
               },
@@ -84,6 +84,7 @@ describe('Index Tests', () => {
           },
         },
       );
+    const s3Mock = mockClient(S3Client);
     s3Mock.on(ListObjectsV2Command)
       .resolvesOnce({
         IsTruncated: false,
@@ -193,7 +194,7 @@ describe('Index Tests', () => {
     assert.strictEqual(await result.status, 200);
   });
   it('setup settings success', async () => {
-    const s3Mock = mockClient(S3Client);
+    const ssmMock = mockClient(SSMClient);
     const result = await main(
       new Request(
         'https://localhost/',
@@ -217,8 +218,8 @@ describe('Index Tests', () => {
       ),
       {},
     );
-    assert.strictEqual(s3Mock.commandCalls(PutObjectCommand).length, 1);
-    assert.strictEqual(await result.text(), 'settings stored under local/settings.json');
+    assert.strictEqual(ssmMock.commandCalls(PutParameterCommand).length, 1);
+    assert.strictEqual(await result.text(), 'settings stored under /franklin-aem-store/local/settings.json');
     assert.strictEqual(await result.status, 200);
   });
   it('setup settings invalid', async () => {

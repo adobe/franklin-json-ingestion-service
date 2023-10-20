@@ -14,13 +14,14 @@ import { logger } from '@adobe/helix-universal-logger';
 import { helixStatus } from '@adobe/helix-status';
 import { Response } from '@adobe/fetch';
 import processQueue from '@adobe/helix-shared-process-queue';
-import Storage from './storage.js';
 import RequestUtil from './request-util.js';
 import {
   cloneObject, processSequence,
   validSettings,
 } from './utils.js';
 import { sendMessage, processMessage } from './sqs-util.js';
+import { putParameter } from './ssm-util.js';
+import { SETTINGS_KEY } from './constants.js';
 
 /**
  * This is the main function
@@ -44,7 +45,6 @@ async function httpHandler(request, context) {
     action, payload, tenant, mode, variation, relPath,
   } = requestUtil;
 
-  const storage = new Storage(context);
   if (action === 'store' || action === 'evict') {
     if (!variation) {
       const paths = Array.isArray(relPath) ? relPath : [relPath];
@@ -58,15 +58,16 @@ async function httpHandler(request, context) {
     }
   } else if (action === 'cleanup') {
     return new Response('cleanup is deprecated, ignored for now');
+  } else if (payload && validSettings(payload)) {
+    const parameterName = await putParameter(
+      tenant,
+      SETTINGS_KEY,
+      JSON.stringify(payload, null, 2),
+    );
+    context.cachedSettings[tenant] = payload;
+    return new Response(`settings stored under ${parameterName}`);
   } else {
-    const key = `${tenant}/settings.json`;
-    if (payload && validSettings(payload)) {
-      await storage.putKey(key, payload);
-      context.cachedSettings[tenant] = payload;
-      return new Response(`settings stored under ${key}`);
-    } else {
-      return new Response('Invalid settings value', { status: 400 });
-    }
+    return new Response('Invalid settings value', { status: 400 });
   }
 }
 
