@@ -280,6 +280,7 @@ describe('Utils Tests', () => {
     assert.strictEqual(isValidEmail(), false);
     assert.strictEqual(isValidEmail('a'), false);
     assert.strictEqual(isValidEmail('a@b'), true);
+    assert.strictEqual(isValidEmail('a@techacct.adobe.com'), false);
   });
   it('createConversation cases', async () => {
     assert.strictEqual(await createConversation(null, 'invalid'), null);

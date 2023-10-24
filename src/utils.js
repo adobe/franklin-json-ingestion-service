@@ -123,7 +123,7 @@ export async function sendSlackMessage(slackToken, channelId, message) {
 }
 
 export function isValidEmail(email) {
-  return /^[^@]+@[^@]+$/.test(email);
+  return /^[^@]+@[^@]+$/.test(email) && !email.endsWith('@techacct.adobe.com');
 }
 
 export function isValidRelPath(relPath) {
