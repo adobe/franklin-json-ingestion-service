@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.1...v2.1.2) (2023-10-24)
+
+
+### Bug Fixes
+
+* SITES-13731 ignore techacct.adobe.com for notifications ([#74](https://github.com/adobe/franklin-json-ingestion-service/issues/74)) ([412b2bd](https://github.com/adobe/franklin-json-ingestion-service/commit/412b2bd0f1fd25e332227438b47ec92a0f631cbe))
+
 ## [2.1.1](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.0...v2.1.1) (2023-10-21)
 
 
