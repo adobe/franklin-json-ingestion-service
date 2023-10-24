@@ -56,14 +56,14 @@
     "@adobe/helix-shared-process-queue": "3.0.0",
     "@adobe/helix-shared-wrap": "2.0.0",
     "@adobe/helix-status": "10.0.10",
-    "@adobe/helix-universal-logger": "3.0.11",
+    "@adobe/helix-universal-logger": "3.0.12",
     "@aws-sdk/client-s3": "3.433.0",
     "@aws-sdk/client-sqs": "3.433.0",
     "@aws-sdk/client-ssm": "3.433.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "2.0.3",
-    "@adobe/helix-deploy": "9.3.10",
+    "@adobe/helix-deploy": "9.3.11",
     "@adobe/helix-universal": "4.4.0",
     "@adobe/semantic-release-coralogix": "1.1.26",
     "@semantic-release/changelog": "6.0.3",
