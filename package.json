@@ -57,9 +57,9 @@
     "@adobe/helix-shared-wrap": "2.0.0",
     "@adobe/helix-status": "10.0.10",
     "@adobe/helix-universal-logger": "3.0.12",
-    "@aws-sdk/client-s3": "3.433.0",
-    "@aws-sdk/client-sqs": "3.433.0",
-    "@aws-sdk/client-ssm": "3.433.0"
+    "@aws-sdk/client-s3": "3.438.0",
+    "@aws-sdk/client-sqs": "3.438.0",
+    "@aws-sdk/client-ssm": "3.438.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "2.0.3",
@@ -77,7 +77,7 @@
     "dotenv": "16.3.1",
     "eslint": "8.52.0",
     "eslint-plugin-header": "3.1.1",
-    "eslint-plugin-import": "2.28.1",
+    "eslint-plugin-import": "2.29.0",
     "husky": "8.0.3",
     "junit-report-builder": "3.1.0",
     "lint-staged": "15.0.2",
