@@ -290,6 +290,10 @@ describe('Utils Tests', () => {
       .post('/api/conversations.open')
       .reply(200, { ok: true, channel: { id: 'dummyChannelId' } });
     assert.strictEqual(await createConversation('dummyToken', 'a@b'), 'dummyChannelId');
+    nock('http://slackcloudservice')
+      .get('/api/users.lookupByEmail?email=a@b')
+      .reply(200, { ok: false, error: 'invalid email' });
+    assert.strictEqual(await createConversation('dummyToken', 'a@b'), 'defaultChannelId');
   });
   it('isValidRelPath cases', () => {
     assert.strictEqual(isValidRelPath(''), true);
