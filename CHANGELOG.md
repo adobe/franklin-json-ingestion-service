@@ -1,3 +1,10 @@
+## [2.1.7](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.6...v2.1.7) (2023-11-10)
+
+
+### Bug Fixes
+
+* SITES-17272 Increase to 10 min ([#84](https://github.com/adobe/franklin-json-ingestion-service/issues/84)) ([881796d](https://github.com/adobe/franklin-json-ingestion-service/commit/881796dcc4b962f5fcecac28805d7f93bfc55580))
+
 ## [2.1.6](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.5...v2.1.6) (2023-11-10)
 
 
