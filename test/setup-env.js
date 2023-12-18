@@ -14,6 +14,7 @@ console.log('Forcing HTTP/1.1 for @adobe/fetch');
 process.env.HELIX_FETCH_FORCE_HTTP1 = 'true';
 process.env.HELIX_DEBOUNCE = 'true';
 process.env.SLACK_URL = 'http://slackcloudservice';
+process.env.SLACK_FALLBACK_CHANNEL_ID = 'defaultChannelId';
 process.env.SQS_QUEUE_URL = 'http://localhost:4566/000000000000/franklin-sqs-queue.fifo';
 process.env.AWS_ENDPOINT_URL = 'http://localhost:4566';
 process.env.AWS_REGION = 'us-east-1';

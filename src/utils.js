@@ -147,8 +147,12 @@ export function isValidRelPath(relPath) {
 export async function createConversation(slackToken, email) {
   if (slackToken && isValidEmail(email)) {
     const slackClient = new SlackClient(SLACK_URL, slackToken);
-    const userId = await slackClient.findUserId(email);
-    return slackClient.createConversation(userId);
+    try {
+      const userId = await slackClient.findUserId(email);
+      return slackClient.createConversation(userId);
+    } catch (err) {
+      return process.env.SLACK_FALLBACK_CHANNEL_ID;
+    }
   }
   return null;
 }
