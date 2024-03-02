@@ -57,9 +57,9 @@
     "@adobe/helix-shared-wrap": "2.0.1",
     "@adobe/helix-status": "10.0.11",
     "@adobe/helix-universal-logger": "3.0.13",
-    "@aws-sdk/client-s3": "3.521.0",
-    "@aws-sdk/client-sqs": "3.521.0",
-    "@aws-sdk/client-ssm": "3.521.0"
+    "@aws-sdk/client-s3": "3.525.0",
+    "@aws-sdk/client-sqs": "3.525.0",
+    "@aws-sdk/client-ssm": "3.525.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "2.0.6",
@@ -69,8 +69,8 @@
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/exec": "6.0.3",
     "@semantic-release/git": "10.0.1",
-    "@stryker-mutator/core": "8.2.5",
-    "@stryker-mutator/mocha-runner": "8.2.5",
+    "@stryker-mutator/core": "8.2.6",
+    "@stryker-mutator/mocha-runner": "8.2.6",
     "adm-zip": "0.5.10",
     "aws-sdk-client-mock": "3.0.1",
     "c8": "8.0.1",
@@ -83,7 +83,7 @@
     "lint-staged": "15.2.2",
     "mocha": "10.3.0",
     "mocha-multi-reporters": "1.5.1",
-    "nock": "13.5.3",
+    "nock": "13.5.4",
     "nodemon": "3.1.0",
     "semantic-release": "22.0.12"
   },
