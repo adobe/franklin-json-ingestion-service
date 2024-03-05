@@ -1,3 +1,19 @@
+## [2.1.15](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.14...v2.1.15) (2024-03-05)
+
+
+### Bug Fixes
+
+* **deps:** update adobe fixes ([2b1f39b](https://github.com/adobe/franklin-json-ingestion-service/commit/2b1f39b1f50cf5dd7040c8748729874c9b5c4f46))
+* **deps:** update external fixes ([9d756eb](https://github.com/adobe/franklin-json-ingestion-service/commit/9d756ebd527828d73199415e48ead7100235c986))
+* **deps:** update external fixes ([585cd9e](https://github.com/adobe/franklin-json-ingestion-service/commit/585cd9e83ad637886135969e144c1a7d270955eb))
+* **deps:** update external fixes ([5e48e48](https://github.com/adobe/franklin-json-ingestion-service/commit/5e48e4841cca74e7dadc059a4dccc927e257550f))
+* **deps:** update external fixes ([bdf16f4](https://github.com/adobe/franklin-json-ingestion-service/commit/bdf16f4bc3db3a5f278be1ded40baec5a9dc706a))
+* **deps:** update external fixes ([37f2b1b](https://github.com/adobe/franklin-json-ingestion-service/commit/37f2b1bd1ae0bcdb876aea13d5e2eaed5b9bd201))
+* **deps:** update external fixes ([92eca5b](https://github.com/adobe/franklin-json-ingestion-service/commit/92eca5b5b923cc941702e1d85cdd84eb50b661ea))
+* **deps:** update external fixes ([94d7714](https://github.com/adobe/franklin-json-ingestion-service/commit/94d7714a63356a4f889d9c2d7a180e780744ff86))
+* **deps:** update external fixes to v3.484.0 ([51fde25](https://github.com/adobe/franklin-json-ingestion-service/commit/51fde256d2d73b9ce2b114ca18c5124bc4f5dfba))
+* **deps:** update external fixes to v3.490.0 ([016e24a](https://github.com/adobe/franklin-json-ingestion-service/commit/016e24a5a69b578b8ca93a890b560c15675b33cf))
+
 ## [2.1.14](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.13...v2.1.14) (2023-12-23)
 
 

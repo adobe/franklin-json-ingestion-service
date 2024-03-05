@@ -1,6 +1,6 @@
 {
   "name": "@adobe/franklin-json-ingestion-service",
-  "version": "2.1.14",
+  "version": "2.1.15",
   "private": true,
   "description": "Franklin JSON Ingestion Service",
   "main": "src/index.js",
