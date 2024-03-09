@@ -1,3 +1,10 @@
+## [2.1.16](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.15...v2.1.16) (2024-03-09)
+
+
+### Bug Fixes
+
+* **deps:** update external fixes to v3.529.1 ([1f439bb](https://github.com/adobe/franklin-json-ingestion-service/commit/1f439bb17eddbe5bc075da4fd8053d83efa9007a))
+
 ## [2.1.15](https://github.com/adobe/franklin-json-ingestion-service/compare/v2.1.14...v2.1.15) (2024-03-05)
 
 
