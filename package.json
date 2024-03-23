@@ -57,9 +57,9 @@
     "@adobe/helix-shared-wrap": "2.0.1",
     "@adobe/helix-status": "10.0.11",
     "@adobe/helix-universal-logger": "3.0.13",
-    "@aws-sdk/client-s3": "3.535.0",
-    "@aws-sdk/client-sqs": "3.535.0",
-    "@aws-sdk/client-ssm": "3.535.0"
+    "@aws-sdk/client-s3": "3.540.0",
+    "@aws-sdk/client-sqs": "3.540.0",
+    "@aws-sdk/client-ssm": "3.540.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "2.0.6",
@@ -72,7 +72,7 @@
     "@stryker-mutator/core": "8.2.6",
     "@stryker-mutator/mocha-runner": "8.2.6",
     "adm-zip": "0.5.12",
-    "aws-sdk-client-mock": "3.0.1",
+    "aws-sdk-client-mock": "3.1.0",
     "c8": "8.0.1",
     "dotenv": "16.4.5",
     "eslint": "8.57.0",
